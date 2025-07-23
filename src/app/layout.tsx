@@ -6,7 +6,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Dawlance MasterCoder Application",
+  title: "Dawlance Analytics Application",
   description: "",
 };
 

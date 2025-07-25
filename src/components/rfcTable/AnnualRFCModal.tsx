@@ -64,8 +64,6 @@ const AnnualRFCModal = ({
     fetchRFCHistory();
   }, [materialId]);
 
-  console.log("the data,", data);
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl w-[75vw]">

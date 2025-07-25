@@ -381,7 +381,22 @@ export const RFCTable: React.FC<DataTableProps> = ({
                 rowData.map((row) => (
                   <TableRow
                     key={getRowKey(row)}
-                    className={`hover:bg-muted/50 ${
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement;
+
+                      // Prevent opening modal if click originated inside any input, button, or interactive field
+                      if (
+                        target.closest("input") ||
+                        target.closest("button") ||
+                        target.closest("textarea") ||
+                        target.closest("select")
+                      ) {
+                        return;
+                      }
+
+                      handleMaterialClick(String(row["Material"] ?? ""));
+                    }}
+                    className={`hover:bg-muted/50 cursor-pointer ${
                       isRowModified(row) ? "bg-blue-50 dark:bg-blue-950/20" : ""
                     }`}
                   >
@@ -438,15 +453,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
                                 placeholder="Enter RFC value"
                               />
                             </div>
-                          ) : column.key === "Material" ? (
-                            <button
-                              onClick={() =>
-                                handleMaterialClick(String(row[column.key]))
-                              }
-                              className="truncate text-xs sm:text-sm w-full text-left hover:underline text-blue-600"
-                            >
-                              {String(row[column.key] ?? "")}
-                            </button>
                           ) : (
                             <div className="truncate text-xs sm:text-sm w-full">
                               {String(row[column.key] ?? "")}

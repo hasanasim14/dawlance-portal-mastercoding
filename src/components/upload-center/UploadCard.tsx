@@ -133,8 +133,6 @@ function UploadCard({
     card.uploadedFile &&
     card.postStatus !== "pending";
 
-  console.log("allow upload ", allowUpload);
-
   return (
     <Card
       className="overflow-hidden border-l-4 transition-all hover:shadow-md"

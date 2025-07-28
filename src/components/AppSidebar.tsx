@@ -8,7 +8,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -159,28 +158,32 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         <SidebarTrigger className="h-8 w-8" />
       </SidebarHeader>
 
-      <SidebarContent className={cn("p-2 flex flex-col h-full")}>
-        <SidebarMenu>
-          {filteredItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                tooltip={item.title}
-                className={cn(
-                  "transition-colors",
-                  pathname === item.url && "bg-gray-200 text-primary"
-                )}
-              >
-                <Link href={item.url}>
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
+      <SidebarContent className="flex flex-col h-full">
+        {/* Scrollable content wrapper */}
+        <div className={cn("flex-1 p-2 overflow-y-auto")}>
+          <SidebarMenu>
+            {filteredItems.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={item.title}
+                  className={cn(
+                    "transition-colors",
+                    pathname === item.url && "bg-gray-200 text-primary"
+                  )}
+                >
+                  <Link href={item.url}>
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </div>
 
-        <div className="mt-auto">
+        {/* Sticky logout section */}
+        <div className="border-t border-border p-2 shrink-0">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -195,8 +198,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </div>
       </SidebarContent>
-
-      <SidebarRail />
     </Sidebar>
   );
 }

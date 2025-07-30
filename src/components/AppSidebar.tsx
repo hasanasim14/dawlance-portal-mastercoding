@@ -23,7 +23,6 @@ import {
   Gift,
   Store,
   Presentation,
-  Settings,
   Clock8,
   DollarSign,
   Tag,
@@ -111,11 +110,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       title: "Marketing RFC",
       url: "/marketing-rfc",
       icon: Presentation,
-    },
-    {
-      title: "Configure Dawlance RFC",
-      url: "/configure-dawlance-rfc",
-      icon: Settings,
     },
     {
       title: "Access Timeframe",

@@ -8,6 +8,7 @@ import { RFCTable } from "@/components/rfcTable/DataTable";
 export default function DawlanceRFC() {
   // Original data from API (unfiltered)
   const [originalRowData, setOriginalRowData] = useState<RowDataType[]>([]);
+  const [warningMessage, setWarningMessage] = useState("");
   // Store the filtered data
   const [filteredRowData, setFilteredRowData] = useState<RowDataType[]>([]);
   const [loading, setLoading] = useState(false);
@@ -160,6 +161,7 @@ export default function DawlanceRFC() {
         // for fetch data
         const data = await fetchEndpointResponse.json();
         const parsedData = typeof data === "string" ? JSON.parse(data) : data;
+        setWarningMessage(data?.warning);
 
         if (parsedData && parsedData.data && Array.isArray(parsedData.data)) {
           const transformedData = transformArrayFromApiFormat(
@@ -450,7 +452,6 @@ export default function DawlanceRFC() {
           isLoading={loading}
           isSaving={saving}
           isPosting={posting}
-          // isAutoSaving={autoSaving}
           filterableColumns={filterableColumns}
           columnFilters={columnFilters}
           onFilterChange={handleFilterChange}
@@ -459,6 +460,7 @@ export default function DawlanceRFC() {
           onEditedValuesChange={handleEditedValuesChange}
           summaryData={summaryData}
           option={"dawlance"}
+          warningMessage={warningMessage}
         />
       </div>
     </div>

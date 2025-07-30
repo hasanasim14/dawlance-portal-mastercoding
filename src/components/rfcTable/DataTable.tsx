@@ -99,6 +99,10 @@ export const RFCTable: React.FC<DataTableProps> = ({
     material_description: null,
   });
   const [branch, setBranch] = useState("");
+  const [dates, setDates] = useState({
+    month: "",
+    year: "",
+  });
 
   const handleMaterialClick = (
     material: string,
@@ -302,6 +306,9 @@ export const RFCTable: React.FC<DataTableProps> = ({
     }
   }, [originalRowData]);
 
+  console.log("the month", dates?.month);
+  console.log("the year", dates?.year);
+
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
       <RFCTableHeaders
@@ -323,6 +330,9 @@ export const RFCTable: React.FC<DataTableProps> = ({
         getCellValue={getCellValue}
         summaryData={summaryData}
         warningMessage={warningMessage}
+        onDateChange={(month: string, year: string) =>
+          setDates({ month, year })
+        }
       />
 
       <div className="flex-1 overflow-hidden rounded-lg border bg-card shadow-sm m-2 p-2">
@@ -474,7 +484,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
                                 }}
                                 disabled={permission == 0}
                                 className="w-full h-7 sm:h-8 text-xs sm:text-sm"
-                                placeholder="Enter RFC value"
+                                placeholder=""
                               />
                             </div>
                           ) : (
@@ -495,10 +505,9 @@ export const RFCTable: React.FC<DataTableProps> = ({
           open={modalOpen}
           onClose={() => setModalOpen(false)}
           materialData={selectedMaterial}
-          // materialId={selectedMaterial}
-          // materialDescription={}
           option={option}
           branch={branch}
+          dates={dates}
         />
       </div>
     </div>

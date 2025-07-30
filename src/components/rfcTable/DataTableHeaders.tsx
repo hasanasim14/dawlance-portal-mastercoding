@@ -59,6 +59,7 @@ interface HeadersProps {
   // eslint-disable-next-line
   summaryData: any[];
   warningMessage: string;
+  onDateChange?: (month: string, year: string) => void;
 }
 
 export const RFCTableHeaders: React.FC<HeadersProps> = ({
@@ -79,6 +80,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
   getCellValue,
   summaryData,
   warningMessage,
+  onDateChange,
 }) => {
   const [branches, setBranches] = useState<BranchOption[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string>(
@@ -95,6 +97,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
     const { month, year } = getNextMonthAndYear("RFC");
     setSelectedMonth(month);
     setSelectedYear(year);
+    onDateChange?.(selectedMonth, selectedYear);
     if (!branchFilter && branches.length > 0) {
       setSelectedBranch(branches[0].salesOffice);
     }

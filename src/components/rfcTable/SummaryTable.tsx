@@ -6,32 +6,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getFullMonthName } from "@/lib/utils";
 
 interface SummaryDataProps {
+  // eslint-disable-next-line
   summaryData: any[];
   month: string;
   year: string;
   option: string;
 }
-
-const getFullMonthName = (monthNumber: string) => {
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  const index = parseInt(monthNumber, 10) - 1;
-  return monthNames[index] || monthNumber;
-};
 
 const SummaryTable = ({
   option,

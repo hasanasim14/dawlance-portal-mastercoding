@@ -172,6 +172,8 @@ export default function MasterCoding() {
       const fieldForApi = field.replace(/\s+/g, "_");
       const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/mastercoding/distinct/${fieldForApi}?filt=${query}`;
 
+      console.log("this is calling", endpoint);
+
       const res = await fetch(endpoint, {
         method: "GET",
         headers: {

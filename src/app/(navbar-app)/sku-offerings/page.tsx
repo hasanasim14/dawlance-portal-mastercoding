@@ -1,8 +1,7 @@
 "use client";
-
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
-import { Upload, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, Clock, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -13,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getNextMonthAndYear } from "@/lib/utils";
-import { PaginationData } from "@/lib/types";
+import type { PaginationData } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -23,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import DateFilter from "@/components/DateFilter";
 import SKUValidations from "@/components/sku-offerings/Validations";
 
@@ -51,7 +51,8 @@ export default function SKUOfferings() {
   const [isDragOver, setIsDragOver] = useState(false);
   // eslint-disable-next-line
   const [isLoading, setIsLoading] = useState(false);
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<string[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,16 +79,16 @@ export default function SKUOfferings() {
   }, []);
 
   useEffect(() => {
-    if (selectedMonth && selectedYear) {
+    if (selectedMonth && selectedYear && selectedProducts.length > 0) {
       fetchOffering(currentPage, pageSize);
     }
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, selectedProducts]);
 
   useEffect(() => {
     const fetchMaterials = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/mastercoding/distinct/Product`,
+          `${process.env.NEXT_PUBLIC_BASE_URL}/mastercoding/distinct/product`,
           {
             method: "GET",
             headers: {
@@ -98,7 +99,7 @@ export default function SKUOfferings() {
         );
         const data = await res.json();
         console.log("the data", data.product);
-        setProducts(data?.product);
+        setProducts(data?.product || []);
       } catch (error) {
         console.error("Error = ", error);
       }
@@ -107,15 +108,16 @@ export default function SKUOfferings() {
     fetchMaterials();
   }, []);
 
-  console.log("the products are", products);
-
   const fetchOffering = async (page = 1, recordsPerPage = 50) => {
+    if (selectedProducts.length === 0) return;
+
     setIsLoading(true);
     try {
       const authToken = localStorage.getItem("token");
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: recordsPerPage.toString(),
+        products: selectedProducts.join(","),
       });
 
       const res = await fetch(
@@ -129,13 +131,32 @@ export default function SKUOfferings() {
         }
       );
       const data = await res.json();
-      setUploadedData(data?.data);
-      setPagination(data?.pagination);
+      setUploadedData(data?.data || []);
+      setPagination(
+        data?.pagination || {
+          total_records: 0,
+          records_per_page: 50,
+          page: 1,
+          total_pages: 0,
+        }
+      );
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleProductSelect = (product: string) => {
+    if (!selectedProducts.includes(product)) {
+      setSelectedProducts([...selectedProducts, product]);
+    }
+  };
+
+  const handleProductRemove = (productToRemove: string) => {
+    setSelectedProducts(
+      selectedProducts.filter((product) => product !== productToRemove)
+    );
   };
 
   const handleFileUpload = async (file: File) => {
@@ -144,6 +165,15 @@ export default function SKUOfferings() {
         ...uploadStatus,
         status: "error",
         error: "Please upload only Excel files (.xlsx or .xls)",
+        file,
+      });
+    }
+
+    if (selectedProducts.length === 0) {
+      return setUploadStatus({
+        ...uploadStatus,
+        status: "error",
+        error: "Please select at least one product before uploading",
         file,
       });
     }
@@ -162,6 +192,7 @@ export default function SKUOfferings() {
       formData.append("file", file);
       formData.append("year", selectedYear);
       formData.append("month", selectedMonth);
+      formData.append("products", selectedProducts.join(","));
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/offerings`,
@@ -238,7 +269,7 @@ export default function SKUOfferings() {
   const handleBrowseClick = () => fileInputRef.current?.click();
 
   const handlePageSizeChange = (val: string) => {
-    const size = parseInt(val);
+    const size = Number.parseInt(val);
     setPageSize(size);
     setCurrentPage(1);
     fetchOffering(1, size);
@@ -248,6 +279,10 @@ export default function SKUOfferings() {
     setCurrentPage(page);
     fetchOffering(page, pageSize);
   };
+
+  const availableProducts = products.filter(
+    (product) => !selectedProducts.includes(product)
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -277,30 +312,59 @@ export default function SKUOfferings() {
           </CardHeader>
 
           <div className="px-6 pb-4 border-b">
-            <div className="flex gap-3 flex-wrap">
-              {/* Material Filter */}
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Select Product" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {products.map((product, index) => (
-                      <SelectItem key={index} value={product}>
-                        {product}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+            <div className="space-y-4">
+              <div className="flex gap-3 flex-wrap items-center">
+                {/* Product Selection */}
+                <Select value="" onValueChange={handleProductSelect}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select Products" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {availableProducts.map((product, index) => (
+                        <SelectItem key={index} value={product}>
+                          {product}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
 
-              {/* Date Filter */}
-              <DateFilter
-                selectedMonth={selectedMonth}
-                setSelectedMonth={setSelectedMonth}
-                selectedYear={selectedYear}
-                setSelectedYear={setSelectedYear}
-              />
+                {/* Date Filter */}
+                <DateFilter
+                  selectedMonth={selectedMonth}
+                  setSelectedMonth={setSelectedMonth}
+                  selectedYear={selectedYear}
+                  setSelectedYear={setSelectedYear}
+                />
+              </div>
+
+              {/* Selected Products Display */}
+              {selectedProducts.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">
+                    Selected Products ({selectedProducts.length}):
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProducts.map((product) => (
+                      <Badge
+                        key={product}
+                        variant="secondary"
+                        className="flex items-center gap-1 px-3 py-1"
+                      >
+                        <span>{product}</span>
+                        <button
+                          onClick={() => handleProductRemove(product)}
+                          className="ml-1 hover:bg-gray-300 rounded-full p-0.5 transition-colors"
+                          aria-label={`Remove ${product}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -332,6 +396,11 @@ export default function SKUOfferings() {
                       : "Drop Excel file here or click to browse"}
                   </p>
                   <p className="text-xs text-gray-500">(.xlsx files only)</p>
+                  {selectedProducts.length === 0 && (
+                    <p className="text-xs text-red-500">
+                      Please select at least one product first
+                    </p>
+                  )}
                 </div>
               </div>
 

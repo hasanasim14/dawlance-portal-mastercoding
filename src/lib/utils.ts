@@ -12,7 +12,7 @@ export const getNextMonthAndYear = (type: string) => {
   const currentYear = now.getFullYear();
 
   let nextMonth;
-  if (type === "RFC") {
+  if (type === "RFC" || type === "offering") {
     nextMonth = currentMonth + 4;
   } else {
     nextMonth = currentMonth + 1;

@@ -76,7 +76,7 @@ export default function AccessTimeFrame() {
     // Debounce API save
     debounceTimeouts.current[index] = setTimeout(() => {
       autosaveDate(updated[index]);
-    }, 1000); // 1 second debounce
+    }, 1000);
   };
 
   const autosaveDate = async (row: TimeFrameProps) => {

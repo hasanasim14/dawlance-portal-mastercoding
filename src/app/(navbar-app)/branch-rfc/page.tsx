@@ -8,6 +8,7 @@ import { RFCTable } from "@/components/rfcTable/DataTable";
 export default function BranchRFC() {
   // Original data from API (unfiltered)
   const [originalRowData, setOriginalRowData] = useState<RowDataType[]>([]);
+  const [warningMessage, setWarningMessage] = useState("");
   // Store the filtered data
   const [filteredRowData, setFilteredRowData] = useState<RowDataType[]>([]);
   const [loading, setLoading] = useState(false);
@@ -203,6 +204,7 @@ export default function BranchRFC() {
 
         const data = await fetchEndpointResponse.json();
         const parsedData = typeof data === "string" ? JSON.parse(data) : data;
+        setWarningMessage(data?.warning);
 
         if (parsedData && parsedData.data && Array.isArray(parsedData.data)) {
           const transformedData = transformArrayFromApiFormat(
@@ -439,6 +441,7 @@ export default function BranchRFC() {
           onEditedValuesChange={handleEditedValuesChange}
           summaryData={summaryData}
           option={"branch"}
+          warningMessage={warningMessage}
         />
       </div>
     </div>

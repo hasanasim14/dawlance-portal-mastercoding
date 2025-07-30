@@ -81,10 +81,8 @@ export default function Branchmaster() {
       let endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/branches`;
 
       const queryParams = new URLSearchParams();
-
       queryParams.append("page", page.toString());
       queryParams.append("limit", recordsPerPage.toString());
-
       const hasSearchParams = Object.keys(searchParams).length > 0;
 
       if (hasSearchParams) {
@@ -95,7 +93,6 @@ export default function Branchmaster() {
       }
 
       endpoint = `${endpoint}?${queryParams.toString()}`;
-
       const authToken = localStorage.getItem("token");
       const res = await fetch(endpoint, {
         method: "GET",
@@ -104,8 +101,8 @@ export default function Branchmaster() {
           Authorization: `Bearer ${authToken}`,
         },
       });
-      const data = await res.json();
 
+      const data = await res.json();
       const parsedData = typeof data === "string" ? JSON.parse(data) : data;
 
       if (parsedData && parsedData.data && Array.isArray(parsedData.data)) {
@@ -188,6 +185,7 @@ export default function Branchmaster() {
 
   useEffect(() => {
     fetchBranchData({}, currentPage, pageSize);
+    // eslint-disable-next-line
   }, []);
 
   // Handle row selection

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -50,6 +51,7 @@ export default function SKUOfferings() {
   const [isDragOver, setIsDragOver] = useState(false);
   // eslint-disable-next-line
   const [isLoading, setIsLoading] = useState(false);
+  const [products, setProducts] = useState([]);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,7 +72,7 @@ export default function SKUOfferings() {
     uploadStatus.status === "uploading" || uploadStatus.status === "processing";
 
   useEffect(() => {
-    const { month, year } = getNextMonthAndYear("Non-RFC");
+    const { month, year } = getNextMonthAndYear("offering");
     setSelectedMonth(month);
     setSelectedYear(year);
   }, []);
@@ -80,6 +82,32 @@ export default function SKUOfferings() {
       fetchOffering(currentPage, pageSize);
     }
   }, [selectedMonth, selectedYear]);
+
+  useEffect(() => {
+    const fetchMaterials = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/mastercoding/distinct/Product`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const data = await res.json();
+        console.log("the data", data.product);
+        setProducts(data?.product);
+      } catch (error) {
+        console.error("Error = ", error);
+      }
+    };
+
+    fetchMaterials();
+  }, []);
+
+  console.log("the products are", products);
 
   const fetchOffering = async (page = 1, recordsPerPage = 50) => {
     setIsLoading(true);
@@ -250,6 +278,23 @@ export default function SKUOfferings() {
 
           <div className="px-6 pb-4 border-b">
             <div className="flex gap-3 flex-wrap">
+              {/* Material Filter */}
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Select Product" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {products.map((product, index) => (
+                      <SelectItem key={index} value={product}>
+                        {product}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+
+              {/* Date Filter */}
               <DateFilter
                 selectedMonth={selectedMonth}
                 setSelectedMonth={setSelectedMonth}

@@ -56,6 +56,13 @@ interface DataTableProps {
   // eslint-disable-next-line
   summaryData: any[];
   option: string;
+  warningMessage: string;
+}
+
+// material object interface
+export interface SelectedMaterial {
+  material_id: string | null;
+  material_description: string | null;
 }
 
 export const RFCTable: React.FC<DataTableProps> = ({
@@ -79,17 +86,28 @@ export const RFCTable: React.FC<DataTableProps> = ({
   onEditedValuesChange,
   summaryData,
   option,
+  warningMessage,
 }) => {
   // State for tracking which rows have been modified
   const [modifiedRows, setModifiedRows] = useState<Set<string>>(new Set());
   // eslint-disable-next-line
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
+  // const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
+  const [selectedMaterial, setSelectedMaterial] = useState<SelectedMaterial>({
+    material_id: null,
+    material_description: null,
+  });
   const [branch, setBranch] = useState("");
 
-  const handleMaterialClick = (material: string) => {
-    setSelectedMaterial(material);
+  const handleMaterialClick = (
+    material: string,
+    material_description: string
+  ) => {
+    setSelectedMaterial({
+      material_id: material,
+      material_description: material_description,
+    });
     setModalOpen(true);
   };
 
@@ -103,6 +121,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
     editedValuesRef.current = editedValues;
     originalRowDataRef.current = originalRowData;
     columnsRef.current = columns;
+    console.log("the columns", columns);
   }, [editedValues, originalRowData, columns]);
 
   // Helper function to create unique row key
@@ -286,6 +305,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
       <RFCTableHeaders
+        option={option}
         permission={permission}
         branchFilter={branchFilter}
         onPost={onPost}
@@ -302,6 +322,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
         getRowKey={getRowKey}
         getCellValue={getCellValue}
         summaryData={summaryData}
+        warningMessage={warningMessage}
       />
 
       <div className="flex-1 overflow-hidden rounded-lg border bg-card shadow-sm m-2 p-2">
@@ -384,7 +405,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
                     onClick={(e) => {
                       const target = e.target as HTMLElement;
 
-                      // Prevent opening modal if click originated inside any input, button, or interactive field
                       if (
                         target.closest("input") ||
                         target.closest("button") ||
@@ -394,7 +414,11 @@ export const RFCTable: React.FC<DataTableProps> = ({
                         return;
                       }
 
-                      handleMaterialClick(String(row["Material"] ?? ""));
+                      // handleMaterialClick(String(row["Material"] ?? ""));
+                      handleMaterialClick(
+                        String(row["Material"] ?? ""),
+                        String(row["Material Description"] ?? "")
+                      );
                     }}
                     className={`hover:bg-muted/50 cursor-pointer ${
                       isRowModified(row) ? "bg-blue-50 dark:bg-blue-950/20" : ""
@@ -470,7 +494,9 @@ export const RFCTable: React.FC<DataTableProps> = ({
         <AnnualRFCModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
-          materialId={selectedMaterial}
+          materialData={selectedMaterial}
+          // materialId={selectedMaterial}
+          // materialDescription={}
           option={option}
           branch={branch}
         />

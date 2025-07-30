@@ -16,6 +16,7 @@ import type { RowDataType, ColumnConfig } from "@/lib/types";
 import { getNextMonthAndYear } from "@/lib/utils";
 import DateFilter from "../DateFilter";
 import SummaryTable from "./SummaryTable";
+import WarningContainer from "../WarningContainer";
 
 interface BranchOption {
   salesOffice: string;
@@ -23,6 +24,7 @@ interface BranchOption {
 }
 
 interface HeadersProps {
+  option: string;
   permission: number;
   branchFilter: boolean;
   onPost: (
@@ -56,9 +58,11 @@ interface HeadersProps {
   ) => string;
   // eslint-disable-next-line
   summaryData: any[];
+  warningMessage: string;
 }
 
 export const RFCTableHeaders: React.FC<HeadersProps> = ({
+  option,
   permission,
   branchFilter,
   onPost,
@@ -74,6 +78,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
   getRowKey,
   getCellValue,
   summaryData,
+  warningMessage,
 }) => {
   const [branches, setBranches] = useState<BranchOption[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string>(
@@ -403,8 +408,14 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
         </div>
       </div>
       {/* Summary Table */}
+      <WarningContainer warningMessage={warningMessage} />
       <div className="border border-gray-200 rounded-xl p-2 m-2">
-        <SummaryTable summaryData={summaryData} />
+        <SummaryTable
+          option={option}
+          month={selectedMonth}
+          year={selectedYear}
+          summaryData={summaryData}
+        />
       </div>
     </div>
   );

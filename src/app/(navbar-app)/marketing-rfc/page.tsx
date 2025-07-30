@@ -9,6 +9,7 @@ import { toast } from "sonner";
 export default function MarketingRFC() {
   // Original data from API (unfiltered)
   const [originalRowData, setOriginalRowData] = useState<RowDataType[]>([]);
+  const [warningMessage, setWarningMessage] = useState("");
   // Store the filtered data
   const [filteredRowData, setFilteredRowData] = useState<RowDataType[]>([]);
   const [loading, setLoading] = useState(false);
@@ -207,6 +208,7 @@ export default function MarketingRFC() {
 
         const data = await fetchEndpointResponse.json();
         const parsedData = typeof data === "string" ? JSON.parse(data) : data;
+        setWarningMessage(data?.warning);
 
         if (parsedData && parsedData.data && Array.isArray(parsedData.data)) {
           const transformedData = transformArrayFromApiFormat(
@@ -452,6 +454,7 @@ export default function MarketingRFC() {
           onEditedValuesChange={handleEditedValuesChange}
           summaryData={summaryData}
           option={"marketing"}
+          warningMessage={warningMessage}
         />
       </div>
     </div>

@@ -1,4 +1,5 @@
 "use client";
+
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
 import { Upload, Clock, ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -79,10 +80,10 @@ export default function SKUOfferings() {
   }, []);
 
   useEffect(() => {
-    if (selectedMonth && selectedYear && selectedProducts.length > 0) {
+    if (selectedMonth && selectedYear) {
       fetchOffering(currentPage, pageSize);
     }
-  }, [selectedMonth, selectedYear, selectedProducts]);
+  }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
     const fetchMaterials = async () => {
@@ -109,15 +110,12 @@ export default function SKUOfferings() {
   }, []);
 
   const fetchOffering = async (page = 1, recordsPerPage = 50) => {
-    if (selectedProducts.length === 0) return;
-
     setIsLoading(true);
     try {
       const authToken = localStorage.getItem("token");
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: recordsPerPage.toString(),
-        products: selectedProducts.join(","),
       });
 
       const res = await fetch(
@@ -215,7 +213,11 @@ export default function SKUOfferings() {
         throw new Error(data?.message || data?.detail || "Upload failed.");
       }
 
-      setUploadedData(data.data || []);
+      if (response.ok) {
+        setUploadedData(data.data || []);
+        fetchOffering(currentPage, pageSize);
+      }
+
       setApiResponse({ data: data?.data || [] });
 
       setUploadStatus({

@@ -125,7 +125,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
     editedValuesRef.current = editedValues;
     originalRowDataRef.current = originalRowData;
     columnsRef.current = columns;
-    console.log("the columns", columns);
   }, [editedValues, originalRowData, columns]);
 
   // Helper function to create unique row key
@@ -187,14 +186,13 @@ export const RFCTable: React.FC<DataTableProps> = ({
         const finalValue =
           editedValue !== undefined ? editedValue : originalValue;
 
-        // Add the RFC field to the row data
-        // Use rfc_1, rfc_2, rfc_3, etc. for multiple RFC columns
-        if (allRFCColumns.length === 1) {
-          rowData.rfc = finalValue;
-        } else {
-          // For multiple RFC columns, use rfc_1, rfc_2, rfc_3, etc.
-          const fieldName = `rfc${index}`;
+        const reversedIndex = allRFCColumns.length - 1 - index;
+
+        if (allRFCColumns.length !== 1) {
+          const fieldName = `rfc-${reversedIndex}`;
           rowData[fieldName] = Number(finalValue);
+        } else {
+          rowData.rfc = finalValue;
         }
       });
 
@@ -305,9 +303,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
       setBranch("");
     }
   }, [originalRowData]);
-
-  console.log("the month", dates?.month);
-  console.log("the year", dates?.year);
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">

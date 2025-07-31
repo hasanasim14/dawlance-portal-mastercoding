@@ -136,9 +136,16 @@ export default function DawlanceRFC() {
         }/dawlance-rfc?${queryParams.toString()}`;
 
         // fetch summary table data
-        const RFCProductEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc-product?${queryParams}`;
+        const RFCProductEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/rfc/lock?${queryParams}`;
 
-        const [fetchEndpointResponse, rfcProductResponse] = await Promise.all([
+        //fetch permission data
+        const permissionEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/lock?${queryParams}`;
+
+        const [
+          fetchEndpointResponse,
+          rfcProductResponse,
+          // permissionEndpointResponse,
+        ] = await Promise.all([
           fetch(fetchEndpoint, {
             method: "GET",
             headers: {
@@ -152,6 +159,13 @@ export default function DawlanceRFC() {
               "Content-Type": "application/json",
             },
           }),
+
+          // fetch(permissionEndpoint, {
+          //   method: "GET",
+          //   headers: {
+          //     "Content-Type": "application/json",
+          //   },
+          // }),
         ]);
 
         // for summary data
@@ -162,6 +176,10 @@ export default function DawlanceRFC() {
         const data = await fetchEndpointResponse.json();
         const parsedData = typeof data === "string" ? JSON.parse(data) : data;
         setWarningMessage(data?.warning);
+
+        // for permissions
+        // const permissionResponse = await permissionEndpointResponse.json();
+        // console.log("the permisssion is", permissionResponse);
 
         if (parsedData && parsedData.data && Array.isArray(parsedData.data)) {
           const transformedData = transformArrayFromApiFormat(

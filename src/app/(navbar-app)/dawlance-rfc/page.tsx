@@ -135,51 +135,36 @@ export default function DawlanceRFC() {
           process.env.NEXT_PUBLIC_BASE_URL
         }/dawlance-rfc?${queryParams.toString()}`;
 
-        // fetch summary table data
-        const RFCProductEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/rfc/lock?${queryParams}`;
+        // fetch Summary Data
+        const fetchSummaryData = `${
+          process.env.NEXT_PUBLIC_BASE_URL
+        }/dawlance-rfc-product?${queryParams.toString()}`;
 
-        //fetch permission data
-        // const permissionEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/lock?${queryParams}`;
+        const [fetchEndpointResponse, fetchSummaryDataResponse] =
+          await Promise.all([
+            fetch(fetchEndpoint, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }),
 
-        const [
-          fetchEndpointResponse,
-          rfcProductResponse,
-          // permissionEndpointResponse,
-        ] = await Promise.all([
-          fetch(fetchEndpoint, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }),
-
-          fetch(RFCProductEndpoint, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }),
-
-          // fetch(permissionEndpoint, {
-          //   method: "GET",
-          //   headers: {
-          //     "Content-Type": "application/json",
-          //   },
-          // }),
-        ]);
-
-        // for summary data
-        const productData = await rfcProductResponse.json();
-        setSummaryData(productData?.data);
+            fetch(fetchSummaryData, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }),
+          ]);
 
         // for fetch data
         const data = await fetchEndpointResponse.json();
         const parsedData = typeof data === "string" ? JSON.parse(data) : data;
         setWarningMessage(data?.warning);
 
-        // for permissions
-        // const permissionResponse = await permissionEndpointResponse.json();
-        // console.log("the permisssion is", permissionResponse);
+        const summaryData = await fetchSummaryDataResponse.json();
+        // console.log("the sumary data", summaryData);
+        setSummaryData(summaryData?.data);
 
         if (parsedData && parsedData.data && Array.isArray(parsedData.data)) {
           const transformedData = transformArrayFromApiFormat(
@@ -246,6 +231,11 @@ export default function DawlanceRFC() {
     ) => {
       setPosting(true);
       try {
+        const queryParams = new URLSearchParams({
+          month,
+          year,
+        }).toString();
+
         // Find all RFC columns that are month-year RFC format
         const rfcColumns = columns.filter((col) => {
           const key = col.key;
@@ -323,8 +313,9 @@ export default function DawlanceRFC() {
           return;
         }
 
-        const dawlanceRFCPost = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc`;
-        const dawlanceRFCSave = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc-save`;
+        const dawlanceRFCPost = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc?${queryParams}`;
+
+        const dawlanceRFCSave = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc-save?${queryParams}`;
 
         // Calling both APIs in parallel
         const [branchRfcResponse, secondApiResponse] = await Promise.all([
@@ -376,9 +367,13 @@ export default function DawlanceRFC() {
     ) => {
       setSaving(true);
       try {
-        const authToken = localStorage.getItem("token");
+        const queryParams = new URLSearchParams({
+          month,
+          year,
+        }).toString();
 
-        const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc-save`;
+        const authToken = localStorage.getItem("token");
+        const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc-save?${queryParams}`;
 
         const response = await fetch(endpoint, {
           method: "POST",
@@ -419,15 +414,15 @@ export default function DawlanceRFC() {
 
       setAutoSaving(true);
       try {
-        // eslint-disable-next-line
-        const query = new URLSearchParams({
-          branch: currentBranch,
+        const queryParams = new URLSearchParams({
           month: currentMonth,
           year: currentYear,
         }).toString();
 
         const authToken = localStorage.getItem("token");
-        const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc-save`;
+        const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc-save?${queryParams}`;
+
+        console.log("the endpoint, ", endpoint);
 
         const response = await fetch(endpoint, {
           method: "POST",

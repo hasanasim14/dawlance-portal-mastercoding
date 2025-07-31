@@ -21,43 +21,40 @@ export default function AccessTimeFrame() {
   const [timeFrameData, setTimeFrameData] = useState<TimeFrameProps[]>([]);
   const debounceTimeouts = useRef<Record<number, NodeJS.Timeout>>({});
 
-  // Fetch data
   useEffect(() => {
-    const FetchTimeFrames = async () => {
-      const authToken = localStorage.getItem("token");
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/bm-timeframes`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
-        const data = await res.json();
-
-        // Convert Date objects or strings into yyyy-mm-dd format
-        // eslint-disable-next-line
-        const parsedData = (data?.data || []).map((item: any) => ({
-          ...item,
-          StartData: item.StartData
-            ? new Date(item.StartData).toISOString().substring(0, 10)
-            : "",
-          EndData: item.EndData
-            ? new Date(item.EndData).toISOString().substring(0, 10)
-            : "",
-        }));
-
-        setTimeFrameData(parsedData);
-      } catch (error) {
-        console.error("Fetch error: ", error);
-      }
-    };
-
     FetchTimeFrames();
   }, []);
+
+  const FetchTimeFrames = async () => {
+    const authToken = localStorage.getItem("token");
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/bm-timeframes`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+      const data = await res.json();
+
+      const parsedData = (data?.data || []).map((item: any) => ({
+        ...item,
+        StartDate: item.StartDate
+          ? new Date(item.StartDate).toISOString().substring(0, 10)
+          : "",
+        EndDate: item.EndDate
+          ? new Date(item.EndDate).toISOString().substring(0, 10)
+          : "",
+      }));
+
+      setTimeFrameData(parsedData);
+    } catch (error) {
+      console.error("Fetch error: ", error);
+    }
+  };
 
   const handleDateChange = (
     index: number,
@@ -103,6 +100,8 @@ export default function AccessTimeFrame() {
       if (!res.ok) {
         throw new Error("Failed to save date");
       }
+
+      await FetchTimeFrames();
     } catch (error) {
       console.error("Autosave error: ", error);
     }

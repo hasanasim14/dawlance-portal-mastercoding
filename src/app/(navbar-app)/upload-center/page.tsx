@@ -72,7 +72,7 @@ export interface UploadCardData {
   postStatus: PostStatus;
   lastUploaded: string | null;
   lastPosted: string | null;
-  inputRef: React.RefObject<HTMLInputElement | null>;
+  inputRef: React.RefObject<HTMLInputElement>;
   icon: React.ReactNode;
   result: string | null;
   postResult: string | null;

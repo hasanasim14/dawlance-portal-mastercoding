@@ -139,7 +139,7 @@ export default function DawlanceRFC() {
         const RFCProductEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/rfc/lock?${queryParams}`;
 
         //fetch permission data
-        const permissionEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/lock?${queryParams}`;
+        // const permissionEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/lock?${queryParams}`;
 
         const [
           fetchEndpointResponse,

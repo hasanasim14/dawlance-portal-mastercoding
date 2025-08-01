@@ -50,8 +50,6 @@ export default function SKUOfferings() {
   });
   const [uploadedData, setUploadedData] = useState<UploadedData[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
-  // eslint-disable-next-line
-  const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState<string[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>("");
@@ -87,6 +85,8 @@ export default function SKUOfferings() {
 
   useEffect(() => {
     const fetchMaterials = async () => {
+      const localProductValue = localStorage.getItem("product");
+
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/mastercoding/distinct/product`,
@@ -98,11 +98,21 @@ export default function SKUOfferings() {
             },
           }
         );
+
         const data = await res.json();
-        console.log("the data", data.product);
-        setProducts(data?.product || []);
+        const productList: string[] = data?.product ?? [];
+
+        if (!localProductValue || localProductValue === "All") {
+          setProducts(productList);
+        } else {
+          const storedProducts = localProductValue
+            .split(",")
+            .map((product) => product.trim());
+
+          setProducts(storedProducts);
+        }
       } catch (error) {
-        console.error("Error = ", error);
+        console.error("Error fetching materials:", error);
       }
     };
 
@@ -110,7 +120,6 @@ export default function SKUOfferings() {
   }, []);
 
   const fetchOffering = async (page = 1, recordsPerPage = 50) => {
-    setIsLoading(true);
     try {
       const authToken = localStorage.getItem("token");
       const queryParams = new URLSearchParams({
@@ -140,8 +149,6 @@ export default function SKUOfferings() {
       );
     } catch (error) {
       console.error("Fetch error:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 

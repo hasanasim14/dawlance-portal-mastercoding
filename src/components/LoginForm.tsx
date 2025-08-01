@@ -70,10 +70,8 @@ export function LoginForm({
         localStorage.setItem("token", data?.access_token);
         localStorage.setItem("user_name", data?.user_name);
         localStorage.setItem("user_role", data?.user_role);
-
-        if (data?.user_role === "branch") {
-          localStorage.setItem("branches", data?.branch);
-        }
+        localStorage.setItem("branches", data?.branch);
+        localStorage.setItem("product", data?.product);
 
         setTimeout(() => {
           router.push("/master-coding");

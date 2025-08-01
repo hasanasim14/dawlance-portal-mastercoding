@@ -118,7 +118,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
           }
         );
         const data = await res.json();
-        let branchList = data.data;
+        let branchList = data?.data;
         if (localBranches?.length) {
           const storedBranchCodes = localBranches
             .split(",")

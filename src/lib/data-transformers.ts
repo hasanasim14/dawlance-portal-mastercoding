@@ -50,14 +50,13 @@ export function transformToApiFormat(
     transformed[apiKey] = value;
   });
 
-  // Special handling for branch role
-  if (transformed.role !== "branch") {
-    transformed.branch = ["All"];
-  }
-
-  // special handling for product manager
-  if (transformed.role !== "product_manager") {
-    transformed.product = ["All"];
+  if (transformed.role) {
+    if (transformed.role !== "branch") {
+      transformed.branch = ["All"];
+    }
+    if (transformed.role !== "product_manager") {
+      transformed.product = ["All"];
+    }
   }
 
   return transformed;

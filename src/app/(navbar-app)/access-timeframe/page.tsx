@@ -40,6 +40,7 @@ export default function AccessTimeFrame() {
       );
       const data = await res.json();
 
+      // eslint-disable-next-line
       const parsedData = (data?.data || []).map((item: any) => ({
         ...item,
         StartDate: item.StartDate

@@ -117,23 +117,30 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
             },
           }
         );
+
         const data = await res.json();
-        let branchList = data?.data;
-        if (localBranches?.length) {
-          const storedBranchCodes = localBranches
+        let branchList = data?.data || [];
+
+        // Filter by Sales Office if not "All"
+        if (localBranches && localBranches !== "All") {
+          const storedSalesOffices = localBranches
             .split(",")
             .map((code) => code.trim());
+
           // eslint-disable-next-line
           branchList = branchList.filter((branch: any) =>
-            storedBranchCodes.includes(branch["Branch Code"])
+            storedSalesOffices.includes(branch["Branch Code"])
           );
         }
+
         // eslint-disable-next-line
         const branchOptions: BranchOption[] = branchList.map((branch: any) => ({
           salesOffice: branch["Sales Office"],
           salesBranch: branch["Sales Branch"] || branch["Sales Office"],
         }));
+
         setBranches(branchOptions);
+
         if (!branchFilter && branchOptions.length > 0) {
           setSelectedBranch(branchOptions[0].salesOffice);
         }

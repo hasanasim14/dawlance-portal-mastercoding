@@ -203,7 +203,10 @@ export const RFCTable: React.FC<DataTableProps> = ({
           const fieldName = `rfc-${reversedIndex}`;
           rowData[fieldName] = Number(finalValue);
         } else {
-          rowData.rfc = finalValue;
+          if (rowData.rfc === undefined) {
+            rowData.rfc = finalValue;
+            console.log("the final Value", rowData.rfc);
+          }
         }
 
         // const reversedIndex = allRFCColumns.length - 1 - index;
@@ -229,6 +232,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
     debounce(() => {
       const changedData = prepareChangedData();
       if (changedData.length > 0 && onAutoSave) {
+        console.log("the changed data", changedData);
         onAutoSave(changedData);
       }
     }, 3000),

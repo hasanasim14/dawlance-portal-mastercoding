@@ -351,15 +351,17 @@ export default function MarketingRFC() {
     ) => {
       setSaving(true);
       try {
-        const query = new URLSearchParams({ branch, month, year }).toString();
-        const authToken = localStorage.getItem("token");
+        console.log("the changed Data", changedData);
+
+        const query = new URLSearchParams({ month, year }).toString();
+        // const authToken = localStorage.getItem("token");
         const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/marketing-rfc-save?${query}`;
 
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(changedData),
         });
@@ -401,13 +403,15 @@ export default function MarketingRFC() {
       setAutoSaving(true);
       try {
         const query = new URLSearchParams({
-          branch: currentBranch,
+          // branch: currentBranch,
           month: currentMonth,
           year: currentYear,
         }).toString();
 
         // const authToken = localStorage.getItem("token");
         const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/marketing-rfc-save?${query}`;
+
+        console.log("the data", changedData);
 
         const response = await fetch(endpoint, {
           method: "POST",

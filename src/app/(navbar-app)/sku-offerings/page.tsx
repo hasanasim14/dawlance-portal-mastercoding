@@ -84,9 +84,8 @@ export default function SKUOfferings() {
   }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
+    const localProductValue = localStorage.getItem("product");
     const fetchMaterials = async () => {
-      const localProductValue = localStorage.getItem("product");
-
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/mastercoding/distinct/product`,

@@ -55,6 +55,11 @@ export function transformToApiFormat(
     transformed.branch = ["All"];
   }
 
+  // special handling for product manager
+  if (transformed.role !== "product_manager") {
+    transformed.product = ["All"];
+  }
+
   return transformed;
 }
 

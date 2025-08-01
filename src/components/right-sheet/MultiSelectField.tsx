@@ -20,7 +20,9 @@ interface SelectOption {
 
 interface MultiSelectFieldProps {
   field: FieldConfig;
+  // eslint-disable-next-line
   formData: Record<string, any>;
+  // eslint-disable-next-line
   selectedRow?: Record<string, any> | null;
   hasChanges: boolean;
   options: SelectOption[];

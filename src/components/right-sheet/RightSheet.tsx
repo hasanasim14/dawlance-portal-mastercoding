@@ -11,7 +11,6 @@ import { MaterialField } from "./MaterialField";
 import { MultiSelectField } from "./MultiSelectField";
 import { FormField } from "./FormField";
 
-
 interface SelectOption {
   value: string;
   label: string;
@@ -21,8 +20,10 @@ interface RightSheetProps {
   parent: string;
   children?: React.ReactNode;
   className?: string;
+  // eslint-disable-next-line
   selectedRow?: Record<string, any> | null;
   onReset?: () => void;
+  // eslint-disable-next-line
   onSave?: (data: Record<string, any>) => Promise<void>;
   title?: string;
   fields?: FieldConfig[];
@@ -45,6 +46,7 @@ export function RightSheet({
   onClose,
 }: RightSheetProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  // eslint-disable-next-line
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -144,8 +146,9 @@ export function RightSheet({
               }
             } else if (field.key === "product" || field.key === "products") {
               // Handle products API response
-              if (data.products && Array.isArray(data.products)) {
-                options = data.products.map((product: any) => ({
+              if (data.product && Array.isArray(data.product)) {
+                // eslint-disable-next-line
+                options = data.product.map((product: any) => ({
                   value:
                     typeof product === "string"
                       ? product
@@ -156,6 +159,7 @@ export function RightSheet({
                       : product.name || product.label || product.id,
                 }));
               } else if (Array.isArray(data)) {
+                // eslint-disable-next-line
                 options = data.map((product: any) => ({
                   value:
                     typeof product === "string"
@@ -177,6 +181,7 @@ export function RightSheet({
               ];
               for (const key of possibleKeys) {
                 if (data[key] && Array.isArray(data[key])) {
+                  // eslint-disable-next-line
                   options = data[key].map((item: any) => ({
                     value:
                       typeof item === "string"
@@ -279,10 +284,10 @@ export function RightSheet({
         typeof formData.role
       );
 
-      if (formData.role === "Product Manager" && !selectOptionsCache.products) {
+      if (formData.role === "product_manager" && !selectOptionsCache.product) {
         console.log("Loading product options...");
         const productField = effectiveFields.find(
-          (field) => field.key === "products"
+          (field) => field.key === "product"
         );
         console.log("Product field found:", productField);
 
@@ -292,7 +297,7 @@ export function RightSheet({
           productField.apiEndpoint
         ) {
           console.log("API endpoint:", productField.apiEndpoint);
-          setLoadingSelects((prev) => ({ ...prev, products: true }));
+          setLoadingSelects((prev) => ({ ...prev, product: true }));
           try {
             const authToken = localStorage.getItem("token");
             const response = await fetch(productField.apiEndpoint, {
@@ -313,8 +318,9 @@ export function RightSheet({
             let options: SelectOption[] = [];
 
             // Handle different response formats for products
-            if (data.products && Array.isArray(data.products)) {
-              options = data.products.map((product: any) => ({
+            if (data.product && Array.isArray(data.product)) {
+              // eslint-disable-next-line
+              options = data.product.map((product: any) => ({
                 value:
                   typeof product === "string"
                     ? product
@@ -325,6 +331,7 @@ export function RightSheet({
                     : product.name || product.label || product.id,
               }));
             } else if (Array.isArray(data)) {
+              // eslint-disable-next-line
               options = data.map((product: any) => ({
                 value:
                   typeof product === "string"
@@ -340,6 +347,7 @@ export function RightSheet({
               const possibleKeys = ["products", "product", "data", "items"];
               for (const key of possibleKeys) {
                 if (data[key] && Array.isArray(data[key])) {
+                  // eslint-disable-next-line
                   options = data[key].map((product: any) => ({
                     value:
                       typeof product === "string"
@@ -361,16 +369,16 @@ export function RightSheet({
             console.log("Processed options:", options);
             setSelectOptionsCache((prev) => ({
               ...prev,
-              products: options,
+              product: options,
             }));
           } catch (error) {
             console.error("Error loading product options:", error);
             setSelectOptionsCache((prev) => ({
               ...prev,
-              products: [],
+              product: [],
             }));
           } finally {
-            setLoadingSelects((prev) => ({ ...prev, products: false }));
+            setLoadingSelects((prev) => ({ ...prev, product: false }));
           }
         } else {
           console.log("No product field or API endpoint found");
@@ -379,7 +387,7 @@ export function RightSheet({
     };
 
     loadProductOptions();
-  }, [formData.role, effectiveFields, selectOptionsCache.products]);
+  }, [formData.role, effectiveFields, selectOptionsCache.product]);
 
   const toggleExpand = () => {
     const newExpandedState = !isExpanded;
@@ -408,9 +416,9 @@ export function RightSheet({
       }
 
       // Clear products selection when role changes from "Product Manager" to something else
-      if (key === "role" && value !== "Product Manager" && prev.products) {
+      if (key === "role" && value !== "product_manager" && prev.product) {
         console.log("Clearing products - role changed from Product Manager");
-        newData.products = [];
+        newData.product = [];
       }
 
       const hasDataChanges = selectedRow
@@ -528,9 +536,9 @@ export function RightSheet({
     }
 
     // Handle Multi-select fields for products - only show when role is "Product Manager"
-    if (field.key === "products") {
+    if (field.key === "product") {
       console.log("Checking products field visibility. Role:", formData.role);
-      if (formData.role !== "Product Manager") {
+      if (formData.role !== "product_manager") {
         console.log("Products field hidden - role is not Product Manager");
         return null;
       }

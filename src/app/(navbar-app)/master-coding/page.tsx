@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RightSheet } from "@/components/RightSheet";
+// import { RightSheet } from "@/components/RightSheet";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type {
   RowDataType,
@@ -9,7 +9,7 @@ import type {
   FieldConfig,
   ColumnConfig,
 } from "@/lib/types";
-import { DataTable } from "@/components/DataTable/DataTable";
+import { DataTable } from "@/components/data-table/DataTable";
 import {
   transformToApiFormat,
   transformArrayFromApiFormat,
@@ -17,6 +17,7 @@ import {
 } from "@/lib/data-transformers";
 import { cn } from "@/lib/utils";
 import SearchComponent from "@/components/SearchComponent";
+import { RightSheet } from "@/components/right-sheet/RightSheet";
 
 export default function MasterCoding() {
   const [selectedRow, setSelectedRow] = useState<RowDataType | null>(null);
@@ -171,8 +172,6 @@ export default function MasterCoding() {
       const authToken = localStorage.getItem("token");
       const fieldForApi = field.replace(/\s+/g, "_");
       const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/mastercoding/distinct/${fieldForApi}?filt=${query}`;
-
-      console.log("this is calling", endpoint);
 
       const res = await fetch(endpoint, {
         method: "GET",

@@ -61,7 +61,6 @@ const AnnualRFCModal = ({
           }
         );
         const data = await res.json();
-        console.log("tje", data?.data);
         setData(data?.data || []);
       } catch (error) {
         console.error("Error fetching RFC history:", error);

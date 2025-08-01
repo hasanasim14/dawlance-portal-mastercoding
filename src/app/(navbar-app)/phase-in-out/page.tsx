@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RightSheet } from "@/components/RightSheet";
+// import { RightSheet } from "@/components/RightSheet";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   transformToApiFormat,
@@ -14,9 +14,10 @@ import type {
   FieldConfig,
   ColumnConfig,
 } from "@/lib/types";
-import { DataTable } from "@/components/DataTable/DataTable";
+import { DataTable } from "@/components/data-table/DataTable";
 import { cn } from "@/lib/utils";
 import SearchComponent from "@/components/SearchComponent";
+import { RightSheet } from "@/components/right-sheet/RightSheet";
 
 export default function PhaseIO() {
   const [selectedRow, setSelectedRow] = useState<RowDataType | null>(null);

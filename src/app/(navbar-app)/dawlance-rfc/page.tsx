@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import type { RowDataType, ColumnConfig } from "@/lib/types";
 import { transformArrayFromApiFormat } from "@/lib/data-transformers";
-import { RFCTable } from "@/components/rfcTable/DataTable";
+import { RFCTable } from "@/components/rfc-table/DataTable";
 
 export default function DawlanceRFC() {
   // Original data from API (unfiltered)

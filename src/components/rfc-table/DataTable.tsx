@@ -155,6 +155,18 @@ export const RFCTable: React.FC<DataTableProps> = ({
     });
   }, []);
 
+  // debugging
+  // const getRFCColumnsWithTrailingSpace = useCallback(() => {
+  //   return columnsRef.current.filter((col) => {
+  //     const key = col.key;
+  //     const isTrailingSpaceRFC = key.includes("RFC") && key.endsWith("RFC");
+
+  //     return isTrailingSpaceRFC;
+  //   });
+  // }, []);
+
+  // const trailingSpaceRFCCount = getRFCColumnsWithTrailingSpace().length;
+
   // Prepare changed data for API call - collects all RFC values for modified rows
   const prepareChangedData = useCallback(() => {
     // eslint-disable-next-line
@@ -186,14 +198,22 @@ export const RFCTable: React.FC<DataTableProps> = ({
         const finalValue =
           editedValue !== undefined ? editedValue : originalValue;
 
-        const reversedIndex = allRFCColumns.length - 1 - index;
-
-        if (allRFCColumns.length !== 1) {
+        if (option === "dawlance") {
+          const reversedIndex = allRFCColumns.length - 1 - index;
           const fieldName = `rfc-${reversedIndex}`;
           rowData[fieldName] = Number(finalValue);
         } else {
           rowData.rfc = finalValue;
         }
+
+        // const reversedIndex = allRFCColumns.length - 1 - index;
+
+        // if (allRFCColumns.length !== 1) {
+        //   const fieldName = `rfc-${reversedIndex}`;
+        //   rowData[fieldName] = Number(finalValue);
+        // } else {
+        //   rowData.rfc = finalValue;
+        // }
       });
 
       // Only add if there are actual changes in this row

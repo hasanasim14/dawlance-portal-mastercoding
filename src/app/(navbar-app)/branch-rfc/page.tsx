@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import type { RowDataType, ColumnConfig } from "@/lib/types";
 import { transformArrayFromApiFormat } from "@/lib/data-transformers";
-import { RFCTable } from "@/components/rfcTable/DataTable";
+import { RFCTable } from "@/components/rfc-table/DataTable";
 
 export default function BranchRFC() {
   // Original data from API (unfiltered)
@@ -166,10 +166,18 @@ export default function BranchRFC() {
 
         const [
           fetchEndpointResponse,
-          permissionEndpointResponse,
           rfcProductResponse,
+          permissionEndpointResponse,
         ] = await Promise.all([
           fetch(fetchEndpoint, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              // Authorization: `Bearer ${authToken}`,
+            },
+          }),
+
+          fetch(RFCProductEndpoint, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -184,15 +192,6 @@ export default function BranchRFC() {
               // Authorization: `Bearer ${authToken}`,
             },
           }),
-          // ]);
-
-          fetch(RFCProductEndpoint, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              // Authorization: `Bearer ${authToken}`,
-            },
-          }),
         ]);
 
         //saving the RFC Summary data table
@@ -200,6 +199,7 @@ export default function BranchRFC() {
         setSummaryData(productData?.data);
 
         const permissionData = await permissionEndpointResponse.json();
+        console.log("the permission", permissionData?.data?.permission);
         setPermission(permissionData?.data?.permission);
 
         const data = await fetchEndpointResponse.json();

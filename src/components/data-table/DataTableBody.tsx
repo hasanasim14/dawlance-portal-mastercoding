@@ -56,7 +56,7 @@ export function DataTableBody({
             onClick={() => {
               if (parent === "User") return;
               onRowClick(row);
-              console.log("row clicked");
+              // console.log("row clicked");
             }}
           >
             <TableCell

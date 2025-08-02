@@ -120,22 +120,34 @@ export default function SKUOfferings() {
 
   const fetchOffering = async (page = 1, recordsPerPage = 50) => {
     try {
-      const authToken = localStorage.getItem("token");
+      const localProductValue = localStorage.getItem("product");
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: recordsPerPage.toString(),
       });
 
+      if (localProductValue && localProductValue !== "All") {
+        const storedProducts = localProductValue
+          .split(",")
+          .map((product) => product.trim())
+          .join(",");
+
+        queryParams.append("product", storedProducts);
+      }
+
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/offerings/${selectedMonth}/${selectedYear}?${queryParams}`,
+        `${
+          process.env.NEXT_PUBLIC_BASE_URL
+        }/offerings/${selectedMonth}/${selectedYear}?${queryParams.toString()}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
+
       const data = await res.json();
       setUploadedData(data?.data || []);
       setPagination(

@@ -1,23 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// import { RightSheet } from "@/components/RightSheet";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type {
   RowDataType,
   PaginationData,
   FieldConfig,
   ColumnConfig,
 } from "@/lib/types";
-import { DataTable } from "@/components/data-table/DataTable";
 import {
   transformToApiFormat,
   transformArrayFromApiFormat,
   extractFields,
 } from "@/lib/data-transformers";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { DataTable } from "@/components/data-table/DataTable";
 import { cn } from "@/lib/utils";
-import SearchComponent from "@/components/SearchComponent";
 import { RightSheet } from "@/components/right-sheet/RightSheet";
+import SearchComponent from "@/components/SearchComponent";
 
 export default function MasterCoding() {
   const [selectedRow, setSelectedRow] = useState<RowDataType | null>(null);
@@ -103,6 +102,15 @@ export default function MasterCoding() {
     { key: "Colour", label: "Colour" },
     { key: "Key Feature", label: "Key Feature" },
   ];
+
+  // to send to the search component
+  const columnsToOmit = ["Master ID"];
+
+  const filteredColumns: readonly ColumnConfig[] = columns.filter(
+    (col) => !columnsToOmit.includes(col.key)
+  );
+
+  console.log("the filtered columns", filteredColumns);
 
   const fetchMasterData = async (
     searchParams: Record<string, string> = {},
@@ -424,7 +432,7 @@ export default function MasterCoding() {
         >
           <div className="h-full overflow-auto">
             <SearchComponent
-              fields={columns}
+              fields={filteredColumns}
               onSearch={handleSearch}
               onClearFilters={handleClearFilters}
               fetchSuggestions={fetchSuggestions}

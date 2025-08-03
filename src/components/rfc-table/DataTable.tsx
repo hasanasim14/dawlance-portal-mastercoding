@@ -88,6 +88,8 @@ export const RFCTable: React.FC<DataTableProps> = ({
   option,
   warningMessage,
 }) => {
+  console.log("the columns", columns);
+
   // State for tracking which rows have been modified
   const [modifiedRows, setModifiedRows] = useState<Set<string>>(new Set());
   // eslint-disable-next-line

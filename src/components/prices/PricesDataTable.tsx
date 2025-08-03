@@ -3,14 +3,6 @@
 import type React from "react";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -20,27 +12,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-// import { debounce } from "lodash";
 import debounce from "lodash.debounce";
-
-import { PriceGroupDataProps } from "@/app/(navbar-app)/price-group/page";
 import { PaginationData } from "@/lib/types";
+import { PricesDataProps } from "@/app/(navbar-app)/prices/page";
 
-interface PriceGroupDataTableProps {
-  data: PriceGroupDataProps[];
+interface PricesDataTableProps {
+  data: PricesDataProps[];
   onPageChange: (newPage: number) => void;
   onPageSizeChange: (newPageSize: string) => void;
   pageSize: number;
   currentPage: number;
   pagination: PaginationData;
-  onUpdate: (updated: {
-    priceGroup: string;
-    field: "Min Price" | "Max Price";
-    value: string;
-  }) => void;
+  onUpdate: (updated: { material: string; value: number }) => void;
 }
 
-const PriceGroupDataTable = ({
+const PricesDataTable = ({
   data,
   onPageChange,
   onPageSizeChange,
@@ -48,32 +34,38 @@ const PriceGroupDataTable = ({
   currentPage,
   pagination,
   onUpdate,
-}: PriceGroupDataTableProps) => {
+}: PricesDataTableProps) => {
   const [editingValues, setEditingValues] = useState<{
-    [key: string]: { min: string; max: string };
+    [material: string]: number;
+  }>({});
+  // eslint-disable-next-line
+  const [savingStatus, setSavingStatus] = useState<{
+    [material: string]: "saving" | "saved" | null;
   }>({});
 
-  const handleInputChange = (
-    priceGroup: string,
-    field: "Min Price" | "Max Price",
-    value: string
-  ) => {
-    setEditingValues((prev) => ({
-      ...prev,
-      [priceGroup]: {
-        ...prev[priceGroup],
-        [field === "Min Price" ? "min" : "max"]: value,
-      },
-    }));
-    debouncedSave(priceGroup, field, value);
+  const handleInputChange = (material: string, value: string) => {
+    const numericValue = Number(value);
+    if (!isNaN(numericValue)) {
+      setEditingValues((prev) => ({
+        ...prev,
+        [material]: numericValue,
+      }));
+      debouncedSave(material, numericValue);
+    }
   };
 
-  const debouncedSave = debounce(
-    (priceGroup: string, field: "Min Price" | "Max Price", value: string) => {
-      onUpdate({ priceGroup, field, value });
-    },
-    500
-  );
+  const debouncedSave = debounce(async (material: string, value: number) => {
+    try {
+      setSavingStatus((prev) => ({ ...prev, [material]: "saving" }));
+      await onUpdate({ material, value });
+      setSavingStatus((prev) => ({ ...prev, [material]: "saved" }));
+      setTimeout(() => {
+        setSavingStatus((prev) => ({ ...prev, [material]: null }));
+      }, 1000);
+    } catch (e) {
+      console.error("Auto-save failed:", e);
+    }
+  }, 500);
 
   return (
     <div className="rounded-lg border bg-card h-full w-full flex flex-col overflow-hidden">
@@ -84,52 +76,40 @@ const PriceGroupDataTable = ({
               <thead className="sticky top-0 z-20 border-b bg-[#f9faf9]">
                 <tr>
                   <th className="p-3 text-left font-medium sticky left-0 z-30 min-w-[1px]">
-                    Price Group
+                    Material
                   </th>
                   <th className="p-3 text-left font-medium whitespace-nowrap">
-                    Min Price
+                    Material Description
                   </th>
                   <th className="p-3 text-left font-medium whitespace-nowrap">
-                    Max Price
+                    Product
+                  </th>
+                  <th className="p-3 text-left font-medium whitespace-nowrap">
+                    Price
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {data.length > 0 ? (
                   data.map((record) => {
-                    const group = record["Price Group"];
-                    const min =
-                      editingValues[group]?.min ?? record["Min Price"];
-                    const max =
-                      editingValues[group]?.max ?? record["Max Price"];
+                    const { Material, Product, Price } = record;
+                    const description = record["Material Description"];
+                    const value = editingValues[Material] ?? Price;
 
                     return (
-                      <tr key={group} className="border-b hover:bg-muted/30">
-                        <td className="p-3">{group}</td>
-                        <td className="p-3 whitespace-nowrap">
+                      <tr key={Material} className="border-b hover:bg-muted/30">
+                        <td className="p-1">{Material}</td>
+                        <td className="p-1 whitespace-nowrap">{description}</td>
+                        <td className="p-1 whitespace-nowrap">{Product}</td>
+                        <td className="p-1 whitespace-nowrap">
                           <Input
-                            value={min}
+                            type="number"
+                            value={value}
                             onChange={(e) =>
-                              handleInputChange(
-                                group,
-                                "Min Price",
-                                e.target.value
-                              )
+                              handleInputChange(Material, e.target.value)
                             }
                             className="w-32"
-                          />
-                        </td>
-                        <td className="p-3 whitespace-nowrap">
-                          <Input
-                            value={max}
-                            onChange={(e) =>
-                              handleInputChange(
-                                group,
-                                "Max Price",
-                                e.target.value
-                              )
-                            }
-                            className="w-32"
+                            min={0}
                           />
                         </td>
                       </tr>
@@ -141,7 +121,7 @@ const PriceGroupDataTable = ({
                       colSpan={4}
                       className="text-center py-8 text-muted-foreground"
                     >
-                      No RFC data found for this material.
+                      No Prices Data Available
                     </td>
                   </tr>
                 )}
@@ -151,8 +131,8 @@ const PriceGroupDataTable = ({
         </div>
       </div>
 
+      {/* Pagination */}
       <div className="p-4 border-t flex flex-col md:flex-row items-center justify-between gap-4">
-        {/* Page Size Selector */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Show:</span>
           <Select value={pageSize.toString()} onValueChange={onPageSizeChange}>
@@ -168,14 +148,12 @@ const PriceGroupDataTable = ({
           <span className="text-sm text-muted-foreground">entries</span>
         </div>
 
-        {/* Page Info */}
         <div className="text-sm text-muted-foreground text-center">
           Showing {(currentPage - 1) * pageSize + 1} to{" "}
           {Math.min(currentPage * pageSize, pagination.total_records)} of{" "}
           {pagination.total_records} entries
         </div>
 
-        {/* Pagination Controls */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -226,4 +204,4 @@ const PriceGroupDataTable = ({
   );
 };
 
-export default PriceGroupDataTable;
+export default PricesDataTable;

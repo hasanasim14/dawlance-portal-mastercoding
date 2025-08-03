@@ -175,6 +175,7 @@ export function SearchableSelectField({
           const normalizedKey = field.key.toLowerCase().replace(/\s+/g, "_");
 
           if (Array.isArray(data[normalizedKey])) {
+            // eslint-disable-next-line
             searchableOptions = data[normalizedKey].map((item: any) => ({
               value: item,
               label: item,

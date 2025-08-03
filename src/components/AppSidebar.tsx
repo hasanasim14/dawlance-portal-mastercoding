@@ -72,14 +72,38 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       icon: Repeat,
     },
     {
+      title: "Access Timeframe",
+      url: "/access-timeframe",
+      icon: Clock8,
+    },
+    {
       title: "SKU Offerings",
       url: "/sku-offerings",
       icon: Gift,
     },
     {
-      title: "Results",
-      url: "/results",
-      icon: TrendingUp,
+      title: "Branch RFC",
+      url: "/branch-rfc",
+      icon: Store,
+    },
+    {
+      title: "Marketing RFC",
+      url: "/marketing-rfc",
+      icon: Presentation,
+    },
+
+    {
+      title: "Dawlance RFC",
+      url: "/dawlance-rfc",
+      icon: () => (
+        <Image
+          width={8}
+          height={8}
+          src="/dawlance.svg"
+          alt="Dawlance"
+          className="w-5 h-5 object-contain"
+        />
+      ),
     },
     {
       title: "Prices",
@@ -102,32 +126,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       icon: Workflow,
     },
     {
-      title: "Branch RFC",
-      url: "/branch-rfc",
-      icon: Store,
-    },
-    {
-      title: "Marketing RFC",
-      url: "/marketing-rfc",
-      icon: Presentation,
-    },
-    {
-      title: "Access Timeframe",
-      url: "/access-timeframe",
-      icon: Clock8,
-    },
-    {
-      title: "Dawlance RFC",
-      url: "/dawlance-rfc",
-      icon: () => (
-        <Image
-          width={8}
-          height={8}
-          src="/dawlance.svg"
-          alt="Dawlance"
-          className="w-5 h-5 object-contain"
-        />
-      ),
+      title: "Results",
+      url: "/results",
+      icon: TrendingUp,
     },
     {
       title: "Users",

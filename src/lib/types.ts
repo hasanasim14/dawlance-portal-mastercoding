@@ -48,7 +48,14 @@ export type PaginationData = {
 export interface FieldConfig {
   key: string;
   label: string;
-  type?: "text" | "number" | "email" | "tel" | "select" | "multi-select";
+  type?:
+    | "text"
+    | "number"
+    | "email"
+    | "tel"
+    | "select"
+    | "multi-select"
+    | "searchable-select";
   required?: boolean;
   readOnly?: boolean;
   selectOptions?: SelectOption[];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -17,12 +17,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 interface TimeFrameProps {
   Branch: string;
   StartDate: string;
   EndDate: string;
-  NumberOfDays?: number;
+  NumberOfDays: number | null;
   Error?: string;
 }
 
@@ -49,27 +50,30 @@ export default function AccessTimeFrame() {
       );
       const data = await res.json();
 
-      const parsedData = (data?.data || []).map((item: any) => {
-        const start = new Date(item.StartDate);
-        const end = new Date(item.EndDate);
-        const days =
-          Math.floor(
-            (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-          ) + 1;
+      const parsedData: TimeFrameProps[] = (data?.data || []).map(
+        // eslint-disable-next-line
+        (item: any) => {
+          const start = new Date(item.StartDate);
+          const end = new Date(item.EndDate);
+          const days =
+            Math.floor(
+              (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+            ) + 1;
 
-        return {
-          Branch: item.Branch,
-          StartDate: item.StartDate
-            ? new Date(item.StartDate).toISOString().substring(0, 10)
-            : "",
-          EndDate: item.EndDate
-            ? new Date(item.EndDate).toISOString().substring(0, 10)
-            : "",
-          NumberOfDays: isNaN(days) ? undefined : days,
-          Error: "",
-        };
-      });
+          return {
+            Branch: item.Branch,
+            StartDate: item.StartDate
+              ? new Date(item.StartDate).toISOString().substring(0, 10)
+              : "",
+            EndDate: item.EndDate
+              ? new Date(item.EndDate).toISOString().substring(0, 10)
+              : "",
+            NumberOfDays: isNaN(days) ? null : days,
+          };
+        }
+      );
 
+      // Clone it for original reference
       setTimeFrameData(parsedData);
       setOriginalData(parsedData);
     } catch (error) {
@@ -77,13 +81,24 @@ export default function AccessTimeFrame() {
     }
   };
 
-  const isChanged = () => {
-    return JSON.stringify(timeFrameData) !== JSON.stringify(originalData);
-  };
+  const normalize = (data: TimeFrameProps[]) =>
+    data.map(({ Branch, StartDate, EndDate, NumberOfDays }) => ({
+      Branch,
+      StartDate: StartDate || "",
+      EndDate: EndDate || "",
+      NumberOfDays: NumberOfDays ?? null,
+    }));
 
-  const hasErrors = () => {
+  const isChanged = useCallback(() => {
+    return (
+      JSON.stringify(normalize(timeFrameData)) !==
+      JSON.stringify(normalize(originalData))
+    );
+  }, [timeFrameData, originalData]);
+
+  const hasErrors = useCallback(() => {
     return timeFrameData.some((item) => item.Error);
-  };
+  }, [timeFrameData]);
 
   const getMonthEnd = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -92,9 +107,11 @@ export default function AccessTimeFrame() {
 
   const handleStartDateChange = (index: number, value: string) => {
     const updated = [...timeFrameData];
-    updated[index].StartDate = value;
+    updated[index] = {
+      ...updated[index],
+      StartDate: value,
+    };
 
-    // Recalculate based on new start + number of days
     const days = updated[index].NumberOfDays;
     if (days) {
       handleDaysChange(index, days, updated);
@@ -111,11 +128,13 @@ export default function AccessTimeFrame() {
     const updated = dataOverride ? [...dataOverride] : [...timeFrameData];
 
     const startDate = updated[index].StartDate;
-    // if (!startDate || isNaN(days) || days <= 0)
     if (!startDate || days <= 0) {
-      updated[index].NumberOfDays = undefined;
-      updated[index].EndDate = "";
-      updated[index].Error = "";
+      updated[index] = {
+        ...updated[index],
+        NumberOfDays: null,
+        EndDate: "",
+        Error: "",
+      };
       setTimeFrameData(updated);
       return;
     }
@@ -130,24 +149,30 @@ export default function AccessTimeFrame() {
         end.getDate() === monthEnd.getDate() &&
         end.getMonth() === monthEnd.getMonth()
       ) {
-        // Allow if it exactly lands on month-end
-        updated[index].EndDate = end.toISOString().split("T")[0];
-        updated[index].NumberOfDays = days;
-        updated[index].Error = "";
+        updated[index] = {
+          ...updated[index],
+          EndDate: end.toISOString().split("T")[0],
+          NumberOfDays: days,
+          Error: "",
+        };
       } else {
-        updated[index].EndDate = end.toISOString().split("T")[0];
-        updated[index].NumberOfDays = days;
-        updated[
-          index
-        ].Error = `Number too high — exceeds month-end (last valid day is ${monthEnd.getDate()})`;
+        updated[index] = {
+          ...updated[index],
+          EndDate: end.toISOString().split("T")[0],
+          NumberOfDays: days,
+          Error: `Number too high — exceeds month-end (last valid day is ${monthEnd.getDate()})`,
+        };
       }
     } else {
-      updated[index].EndDate = end.toISOString().split("T")[0];
-      updated[index].NumberOfDays = days;
-      updated[index].Error = "";
+      updated[index] = {
+        ...updated[index],
+        EndDate: end.toISOString().split("T")[0],
+        NumberOfDays: days,
+        Error: "",
+      };
     }
 
-    // Cascade logic
+    // Cascade logic for next rows
     for (let i = index + 1; i < updated.length; i++) {
       const prevEnd = updated[i - 1].EndDate;
       if (!prevEnd) break;
@@ -157,15 +182,18 @@ export default function AccessTimeFrame() {
       const monthEnd = getMonthEnd(prevEnd);
 
       if (nextStart > monthEnd) {
-        updated[i].StartDate = "";
-        updated[i].EndDate = "";
-        updated[i].Error = "Start date exceeds current month.";
+        updated[i] = {
+          ...updated[i],
+          StartDate: "",
+          EndDate: "",
+          Error: "Start date exceeds current month.",
+        };
         continue;
       }
 
       updated[i].StartDate = nextStart.toISOString().split("T")[0];
+      const nextDays = updated[i].NumberOfDays ?? 0;
       const newEnd = new Date(nextStart);
-      const nextDays = updated[i].NumberOfDays || 0;
       newEnd.setDate(newEnd.getDate() + nextDays - 1);
 
       if (
@@ -176,12 +204,17 @@ export default function AccessTimeFrame() {
           newEnd.getMonth() === monthEnd.getMonth()
         )
       ) {
-        updated[i].EndDate = newEnd.toISOString().split("T")[0];
-        updated[i].Error = `Exceeds month-end (max ${monthEnd.getDate()})`;
+        updated[i] = {
+          ...updated[i],
+          EndDate: newEnd.toISOString().split("T")[0],
+          Error: `Exceeds month-end (max ${monthEnd.getDate()})`,
+        };
       } else {
-        updated[i].EndDate =
-          nextDays > 0 ? newEnd.toISOString().split("T")[0] : "";
-        updated[i].Error = "";
+        updated[i] = {
+          ...updated[i],
+          EndDate: nextDays > 0 ? newEnd.toISOString().split("T")[0] : "",
+          Error: "",
+        };
       }
     }
 
@@ -190,7 +223,7 @@ export default function AccessTimeFrame() {
 
   const handlePost = async () => {
     const payload = timeFrameData.map(({ Branch, StartDate, EndDate }) => ({
-      Branch,
+      branch: Branch,
       start_date: StartDate,
       end_date: EndDate,
     }));
@@ -199,25 +232,27 @@ export default function AccessTimeFrame() {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/bm-timeframes`,
         {
-          method: "POST",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            // Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(payload),
         }
       );
       if (res.ok) {
-        alert("Data posted successfully!");
-        setOriginalData(timeFrameData); // Reset original state
+        toast.success("Data saved successfully!");
+        setOriginalData(normalize(timeFrameData));
       } else {
-        alert("Failed to post data");
+        toast.error("Failed to save data");
       }
     } catch (err) {
       console.error("Post error", err);
-      alert("Error while posting");
+      toast.error("Failed to save data. Please try again later");
     }
   };
+
+  const disabled = !isChanged() || hasErrors();
 
   return (
     <div className="w-full flex flex-col overflow-hidden p-4 space-y-4 h-[85vh]">
@@ -239,8 +274,8 @@ export default function AccessTimeFrame() {
               <li>Only the first row’s start date can be edited manually.</li>
               <li>Enter days to calculate end date automatically.</li>
               <li>
-                If your days land on the <b>last date of the month</b>, it's
-                valid.
+                If your days land on the <b>last date of the month</b>,
+                it&apos;s valid.
               </li>
               <li>
                 Going beyond will still show the result, but with an error.
@@ -251,10 +286,8 @@ export default function AccessTimeFrame() {
         </Tooltip>
         <Button
           onClick={handlePost}
-          disabled={!isChanged() || hasErrors()}
-          className={
-            !isChanged() || hasErrors() ? "opacity-50 cursor-not-allowed" : ""
-          }
+          disabled={disabled}
+          className={disabled ? "opacity-50 cursor-not-allowed" : ""}
         >
           <Send className="mr-2" />
           Post
@@ -303,7 +336,7 @@ export default function AccessTimeFrame() {
                       <Input
                         type="number"
                         className="py-0"
-                        value={item.NumberOfDays || ""}
+                        value={item.NumberOfDays ?? ""}
                         onChange={(e) => {
                           const val = e.target.value;
                           const parsed = parseInt(val, 10);

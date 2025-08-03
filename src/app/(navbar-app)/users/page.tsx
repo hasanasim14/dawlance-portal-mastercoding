@@ -63,7 +63,7 @@ export default function Users() {
       key: "branch",
       label: "Branch",
       type: "select",
-      apiEndpoint: `${process.env.NEXT_PUBLIC_BASE_URL}/branches/distinct/branch_code`,
+      apiEndpoint: `${process.env.NEXT_PUBLIC_BASE_URL}/branches/distinct/sales_office`,
     },
     {
       key: "product",

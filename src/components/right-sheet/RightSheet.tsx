@@ -10,6 +10,7 @@ import type { FieldConfig } from "@/lib/types";
 import { MaterialField } from "./MaterialField";
 import { MultiSelectField } from "./MultiSelectField";
 import { FormField } from "./FormField";
+import { SearchableSelectField } from "./SearchableSelect";
 
 interface SelectOption {
   value: string;
@@ -20,16 +21,15 @@ interface RightSheetProps {
   parent: string;
   children?: React.ReactNode;
   className?: string;
-  // eslint-disable-next-line
   selectedRow?: Record<string, any> | null;
   onReset?: () => void;
-  // eslint-disable-next-line
   onSave?: (data: Record<string, any>) => Promise<void>;
   title?: string;
   fields?: FieldConfig[];
   apiEndpoint?: string;
   isOpen?: boolean;
   onClose?: () => void;
+  fetchSuggestions?: (field: string, query: string) => Promise<string[]>;
 }
 
 export function RightSheet({
@@ -44,12 +44,15 @@ export function RightSheet({
   apiEndpoint = "/api/save",
   isOpen,
   onClose,
+  fetchSuggestions,
 }: RightSheetProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  // eslint-disable-next-line
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [fieldValidation, setFieldValidation] = useState<
+    Record<string, boolean>
+  >({}); // Track field validation
 
   // Dynamic select options state
   const [selectOptionsCache, setSelectOptionsCache] = useState<
@@ -87,6 +90,7 @@ export function RightSheet({
       setIsExpanded(false);
       setFormData({});
       setHasChanges(false);
+      setFieldValidation({}); // Reset validation when closing
     }
   }, [selectedRow, isOpen]);
 
@@ -138,17 +142,16 @@ export function RightSheet({
                 label: typeof value === "string" ? value : key,
               }));
             } else if (field.key === "branch" || field.key === "branches") {
-              if (data.branch_code && Array.isArray(data.branch_code)) {
-                options = data.branch_code.map((code: string) => ({
+              if (data.sales_office && Array.isArray(data.sales_office)) {
+                options = data.sales_office.map((code: string) => ({
                   value: code,
                   label: code,
                 }));
               }
             } else if (field.key === "product" || field.key === "products") {
               // Handle products API response
-              if (data.product && Array.isArray(data.product)) {
-                // eslint-disable-next-line
-                options = data.product.map((product: any) => ({
+              if (data.products && Array.isArray(data.products)) {
+                options = data.products.map((product: any) => ({
                   value:
                     typeof product === "string"
                       ? product
@@ -159,7 +162,6 @@ export function RightSheet({
                       : product.name || product.label || product.id,
                 }));
               } else if (Array.isArray(data)) {
-                // eslint-disable-next-line
                 options = data.map((product: any) => ({
                   value:
                     typeof product === "string"
@@ -181,7 +183,6 @@ export function RightSheet({
               ];
               for (const key of possibleKeys) {
                 if (data[key] && Array.isArray(data[key])) {
-                  // eslint-disable-next-line
                   options = data[key].map((item: any) => ({
                     value:
                       typeof item === "string"
@@ -221,6 +222,7 @@ export function RightSheet({
 
   // Load branch options when role changes to "branch"
   useEffect(() => {
+    console.log("fetchin fata for branches");
     const loadBranchOptions = async () => {
       if (formData.role === "branch" && !selectOptionsCache.branch) {
         const branchField = effectiveFields.find(
@@ -245,9 +247,10 @@ export function RightSheet({
             if (!response.ok) throw new Error("Failed to fetch branch options");
 
             const data = await response.json();
+            console.log("the branch data is here", data);
             let options: SelectOption[] = [];
-            if (data.branch_code && Array.isArray(data.branch_code)) {
-              options = data.branch_code.map((code: string) => ({
+            if (data.sales_office && Array.isArray(data.sales_office)) {
+              options = data.sales_office.map((code: string) => ({
                 value: code,
                 label: code,
               }));
@@ -276,28 +279,17 @@ export function RightSheet({
   // Load product options when role changes to "Product Manager"
   useEffect(() => {
     const loadProductOptions = async () => {
-      // Debug log to see what role value we're getting
-      console.log(
-        "Current role:",
-        formData.role,
-        "Type:",
-        typeof formData.role
-      );
-
-      if (formData.role === "product_manager" && !selectOptionsCache.product) {
-        console.log("Loading product options...");
+      if (formData.role === "product_manager" && !selectOptionsCache.products) {
         const productField = effectiveFields.find(
-          (field) => field.key === "product"
+          (field) => field.key === "products"
         );
-        console.log("Product field found:", productField);
 
         if (
           productField &&
           "apiEndpoint" in productField &&
           productField.apiEndpoint
         ) {
-          console.log("API endpoint:", productField.apiEndpoint);
-          setLoadingSelects((prev) => ({ ...prev, product: true }));
+          setLoadingSelects((prev) => ({ ...prev, products: true }));
           try {
             const authToken = localStorage.getItem("token");
             const response = await fetch(productField.apiEndpoint, {
@@ -308,19 +300,15 @@ export function RightSheet({
               },
             });
 
-            console.log("Response status:", response.status);
             if (!response.ok)
               throw new Error("Failed to fetch product options");
 
             const data = await response.json();
-            console.log("Products API response:", data);
-
             let options: SelectOption[] = [];
 
             // Handle different response formats for products
-            if (data.product && Array.isArray(data.product)) {
-              // eslint-disable-next-line
-              options = data.product.map((product: any) => ({
+            if (data.products && Array.isArray(data.products)) {
+              options = data.products.map((product: any) => ({
                 value:
                   typeof product === "string"
                     ? product
@@ -331,7 +319,6 @@ export function RightSheet({
                     : product.name || product.label || product.id,
               }));
             } else if (Array.isArray(data)) {
-              // eslint-disable-next-line
               options = data.map((product: any) => ({
                 value:
                   typeof product === "string"
@@ -347,7 +334,6 @@ export function RightSheet({
               const possibleKeys = ["products", "product", "data", "items"];
               for (const key of possibleKeys) {
                 if (data[key] && Array.isArray(data[key])) {
-                  // eslint-disable-next-line
                   options = data[key].map((product: any) => ({
                     value:
                       typeof product === "string"
@@ -366,28 +352,25 @@ export function RightSheet({
               }
             }
 
-            console.log("Processed options:", options);
             setSelectOptionsCache((prev) => ({
               ...prev,
-              product: options,
+              products: options,
             }));
           } catch (error) {
             console.error("Error loading product options:", error);
             setSelectOptionsCache((prev) => ({
               ...prev,
-              product: [],
+              products: [],
             }));
           } finally {
-            setLoadingSelects((prev) => ({ ...prev, product: false }));
+            setLoadingSelects((prev) => ({ ...prev, products: false }));
           }
-        } else {
-          console.log("No product field or API endpoint found");
         }
       }
     };
 
     loadProductOptions();
-  }, [formData.role, effectiveFields, selectOptionsCache.product]);
+  }, [formData.role, effectiveFields, selectOptionsCache.products]);
 
   const toggleExpand = () => {
     const newExpandedState = !isExpanded;
@@ -400,13 +383,12 @@ export function RightSheet({
   const handleClose = () => {
     setFormData({});
     setHasChanges(false);
+    setFieldValidation({});
     onClose?.();
     onReset?.();
   };
 
   const handleInputChange = (key: string, value: string | string[]) => {
-    console.log("Input change:", key, "=", value);
-
     setFormData((prev) => {
       const newData = { ...prev, [key]: value };
 
@@ -416,9 +398,8 @@ export function RightSheet({
       }
 
       // Clear products selection when role changes from "Product Manager" to something else
-      if (key === "role" && value !== "product_manager" && prev.product) {
-        console.log("Clearing products - role changed from Product Manager");
-        newData.product = [];
+      if (key === "role" && value !== "product_manager" && prev.products) {
+        newData.products = [];
       }
 
       const hasDataChanges = selectedRow
@@ -437,13 +418,36 @@ export function RightSheet({
           });
 
       setHasChanges(hasDataChanges);
-      console.log("New form data:", newData);
       return newData;
     });
   };
 
+  // Handle validation changes from searchable select fields
+  const handleValidationChange = (key: string, isValid: boolean) => {
+    setFieldValidation((prev) => ({
+      ...prev,
+      [key]: isValid,
+    }));
+  };
+
+  // Check if all fields are valid
+  const isFormValid = () => {
+    const searchableSelectFields = effectiveFields.filter(
+      (field) => field.type === "searchable-select"
+    );
+
+    // Check if any searchable select field is invalid
+    const hasInvalidFields = searchableSelectFields.some((field) => {
+      const fieldValue = formData[field.key]?.toString().trim();
+      // If field has a value but validation is false, it's invalid
+      return fieldValue && fieldValidation[field.key] === false;
+    });
+
+    return !hasInvalidFields;
+  };
+
   const handleSave = async () => {
-    if (!hasChanges) {
+    if (!hasChanges || !isFormValid()) {
       return;
     }
 
@@ -482,6 +486,7 @@ export function RightSheet({
       setFormData({});
     }
     setHasChanges(false);
+    setFieldValidation({});
     onReset?.();
   };
 
@@ -536,13 +541,10 @@ export function RightSheet({
     }
 
     // Handle Multi-select fields for products - only show when role is "Product Manager"
-    if (field.key === "product") {
-      console.log("Checking products field visibility. Role:", formData.role);
+    if (field.key === "products") {
       if (formData.role !== "product_manager") {
-        console.log("Products field hidden - role is not Product Manager");
         return null;
       }
-      console.log("Showing products field");
       return (
         <MultiSelectField
           key={field.key}
@@ -553,6 +555,21 @@ export function RightSheet({
           options={selectOptionsCache[field.key] || []}
           isLoading={loadingSelects[field.key] || false}
           onInputChange={handleInputChange}
+        />
+      );
+    }
+
+    // Handle searchable select fields (like Product)
+    if (field.type === "searchable-select") {
+      return (
+        <SearchableSelectField
+          key={field.key}
+          field={field}
+          formData={formData}
+          selectedRow={selectedRow}
+          hasChanges={hasChanges}
+          onInputChange={handleInputChange}
+          onValidationChange={handleValidationChange}
         />
       );
     }
@@ -673,6 +690,7 @@ export function RightSheet({
             !isVisible ||
             !hasChanges ||
             isSaving ||
+            !isFormValid() || // Add form validation check
             effectiveFields.some(
               (field) =>
                 field.required &&

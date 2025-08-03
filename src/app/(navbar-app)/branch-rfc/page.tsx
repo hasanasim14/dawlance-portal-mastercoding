@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import type { RowDataType, ColumnConfig } from "@/lib/types";
+import type { RowDataType, ColumnConfig, PermissionConfig } from "@/lib/types";
 import { transformArrayFromApiFormat } from "@/lib/data-transformers";
 import { RFCTable } from "@/components/rfc-table/DataTable";
 
@@ -23,7 +23,7 @@ export default function BranchRFC() {
   const [editedValues, setEditedValues] = useState<
     Record<string, Record<string, string>>
   >({});
-  const [permission, setPermission] = useState(0);
+  const [permission, setPermission] = useState<PermissionConfig | null>(null);
   const [summaryData, setSummaryData] = useState([]);
 
   //autosave state
@@ -156,13 +156,18 @@ export default function BranchRFC() {
           process.env.NEXT_PUBLIC_BASE_URL
         }/branch-rfc?${queryParams.toString()}`;
 
+        // for summary data
+        const RFCProductEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/branch-rfc-product?${queryParams}`;
+
+        queryParams.delete("branch");
+
+        queryParams.append("branch_name", branch);
+        queryParams.append("branch", "Branches");
+
         // get post/save permission
         const permissionEndpoint = `${
           process.env.NEXT_PUBLIC_BASE_URL
         }/rfc/lock?${queryParams.toString()}`;
-
-        // for summary data
-        const RFCProductEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/branch-rfc-product?${queryParams}`;
 
         const [
           fetchEndpointResponse,
@@ -199,7 +204,10 @@ export default function BranchRFC() {
         setSummaryData(productData?.data);
 
         const permissionData = await permissionEndpointResponse.json();
-        setPermission(permissionData?.data?.permission);
+        setPermission({
+          post_allowed: permissionData?.data?.permission?.post_allowed,
+          save_allowed: permissionData?.data?.permission?.save_allowed,
+        });
 
         const data = await fetchEndpointResponse.json();
         const parsedData = typeof data === "string" ? JSON.parse(data) : data;

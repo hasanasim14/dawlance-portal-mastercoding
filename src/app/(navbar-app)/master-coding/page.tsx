@@ -149,7 +149,6 @@ export default function MasterCoding() {
     (col) => !columnsToOmit.includes(col.key)
   );
 
-  console.log("the filtered columns", filteredColumns);
 
   const fetchMasterData = async (
     searchParams: Record<string, string> = {},

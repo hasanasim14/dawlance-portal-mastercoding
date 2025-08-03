@@ -12,14 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { ColumnConfig, RowDataType } from "@/lib/types";
+import type { ColumnConfig, PermissionConfig, RowDataType } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { RFCTableHeaders } from "./DataTableHeaders";
 import { ColumnFilter } from "./ColumnFilter";
 import AnnualRFCModal from "./AnnualRFCModal";
 
 interface DataTableProps {
-  permission: number;
+  permission: PermissionConfig | null;
   branchFilter: boolean;
   rowData: RowDataType[];
   originalRowData: RowDataType[];
@@ -88,7 +88,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
   option,
   warningMessage,
 }) => {
-  console.log("the columns", columns);
 
   // State for tracking which rows have been modified
   const [modifiedRows, setModifiedRows] = useState<Set<string>>(new Set());
@@ -207,7 +206,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
         } else {
           if (rowData.rfc === undefined) {
             rowData.rfc = finalValue;
-            console.log("the final Value", rowData.rfc);
           }
         }
 
@@ -234,7 +232,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
     debounce(() => {
       const changedData = prepareChangedData();
       if (changedData.length > 0 && onAutoSave) {
-        console.log("the changed data", changedData);
         onAutoSave(changedData);
       }
     }, 3000),
@@ -503,7 +500,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
                                     handleCellBlur();
                                   }
                                 }}
-                                disabled={permission == 0}
+                                // disabled={permission == 0}
                                 className="w-full h-7 sm:h-8 text-xs sm:text-sm"
                                 placeholder=""
                               />

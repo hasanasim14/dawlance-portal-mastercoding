@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import type { RowDataType, ColumnConfig } from "@/lib/types";
+import type { RowDataType, ColumnConfig, PermissionConfig } from "@/lib/types";
 import { transformArrayFromApiFormat } from "@/lib/data-transformers";
 import { RFCTable } from "@/components/rfc-table/DataTable";
 import { toast } from "sonner";
@@ -24,7 +24,8 @@ export default function MarketingRFC() {
   const [editedValues, setEditedValues] = useState<
     Record<string, Record<string, string>>
   >({});
-  const [permission, setPermission] = useState(0);
+  const [permission, setPermission] = useState<PermissionConfig | null>(null);
+
   // eslint-disable-next-line
   const [summaryData, setSummaryData] = useState([]);
 
@@ -204,7 +205,10 @@ export default function MarketingRFC() {
         setSummaryData(productData?.data);
 
         const permissionData = await permissionEndpointResponse.json();
-        setPermission(permissionData?.data?.permission);
+        setPermission({
+          post_allowed: permissionData?.data?.permission?.post_allowed,
+          save_allowed: permissionData?.data?.permission?.save_allowed,
+        });
 
         const data = await fetchEndpointResponse.json();
         const parsedData = typeof data === "string" ? JSON.parse(data) : data;
@@ -351,7 +355,6 @@ export default function MarketingRFC() {
     ) => {
       setSaving(true);
       try {
-
         const query = new URLSearchParams({ month, year }).toString();
         // const authToken = localStorage.getItem("token");
         const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/marketing-rfc-save?${query}`;
@@ -409,7 +412,6 @@ export default function MarketingRFC() {
 
         // const authToken = localStorage.getItem("token");
         const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/marketing-rfc-save?${query}`;
-
 
         const response = await fetch(endpoint, {
           method: "POST",

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Save, Send, Loader2, FilterX } from "lucide-react";
-import type { RowDataType, ColumnConfig } from "@/lib/types";
+import type { RowDataType, ColumnConfig, PermissionConfig } from "@/lib/types";
 import { getNextMonthAndYear } from "@/lib/utils";
 import DateFilter from "../DateFilter";
 import SummaryTable from "./SummaryTable";
@@ -25,7 +25,7 @@ interface BranchOption {
 
 interface HeadersProps {
   option: string;
-  permission: number;
+  permission: PermissionConfig | null;
   branchFilter: boolean;
   onPost: (
     branch: string,
@@ -374,7 +374,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
                 !canSave() ||
                 isSaving ||
                 isPosting ||
-                permission == 0
+                permission?.save_allowed == 0
               }
               variant="outline"
               size="sm"
@@ -398,7 +398,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
                 !canPost() ||
                 isSaving ||
                 isPosting ||
-                permission == 0
+                permission?.post_allowed == 0
               }
               size="sm"
             >

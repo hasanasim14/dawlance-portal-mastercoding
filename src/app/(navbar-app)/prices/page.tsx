@@ -50,7 +50,6 @@ export default function Prices() {
     }
   };
 
-  console.log("prices", pricesData);
 
   const handlePageSizeChange = (val: string) => {
     const size = Number.parseInt(val);
@@ -77,8 +76,8 @@ export default function Prices() {
         price: value,
       };
 
-      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/prices/update`, {
-        method: "PUT",
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/prices/add`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },

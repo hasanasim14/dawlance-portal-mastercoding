@@ -75,3 +75,8 @@ export type ColumnConfig = {
   key: string;
   label: string;
 };
+
+export type PermissionConfig = {
+  post_allowed: number;
+  save_allowed: number;
+};

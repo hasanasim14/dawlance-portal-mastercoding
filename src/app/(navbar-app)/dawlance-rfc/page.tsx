@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import type { RowDataType, ColumnConfig } from "@/lib/types";
+import type { RowDataType, ColumnConfig, PermissionConfig } from "@/lib/types";
 import { transformArrayFromApiFormat } from "@/lib/data-transformers";
 import { RFCTable } from "@/components/rfc-table/DataTable";
 
@@ -29,6 +29,7 @@ export default function DawlanceRFC() {
   const [currentBranch, setCurrentBranch] = useState<string>("");
   const [currentMonth, setCurrentMonth] = useState<string>("");
   const [currentYear, setCurrentYear] = useState<string>("");
+  const [permission, setPermission] = useState<PermissionConfig | null>(null);
   const [summaryData, setSummaryData] = useState([]);
 
   // which columns to have the filter on
@@ -140,22 +141,40 @@ export default function DawlanceRFC() {
           process.env.NEXT_PUBLIC_BASE_URL
         }/dawlance-rfc-product?${queryParams.toString()}`;
 
-        const [fetchEndpointResponse, fetchSummaryDataResponse] =
-          await Promise.all([
-            fetch(fetchEndpoint, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }),
+        queryParams.delete("branch");
+        queryParams.append("branch", "Dawlance");
 
-            fetch(fetchSummaryData, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }),
-          ]);
+        // get permission data
+        const permissionEndpoint = `${
+          process.env.NEXT_PUBLIC_BASE_URL
+        }/rfc/lock?${queryParams.toString()}`;
+
+        const [
+          fetchEndpointResponse,
+          fetchSummaryDataResponse,
+          permissionEndpointResponse,
+        ] = await Promise.all([
+          fetch(fetchEndpoint, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }),
+
+          fetch(fetchSummaryData, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }),
+
+          fetch(permissionEndpoint, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }),
+        ]);
 
         // for fetch data
         const data = await fetchEndpointResponse.json();
@@ -164,6 +183,13 @@ export default function DawlanceRFC() {
 
         const summaryData = await fetchSummaryDataResponse.json();
         setSummaryData(summaryData?.data);
+
+        // setting permission data
+        const permissionData = await permissionEndpointResponse.json();
+        setPermission({
+          post_allowed: permissionData?.data?.permission?.post_allowed,
+          save_allowed: permissionData?.data?.permission?.save_allowed,
+        });
 
         if (parsedData && parsedData.data && Array.isArray(parsedData.data)) {
           const transformedData = transformArrayFromApiFormat(
@@ -421,7 +447,6 @@ export default function DawlanceRFC() {
         const authToken = localStorage.getItem("token");
         const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc-save?${queryParams}`;
 
-
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
@@ -451,7 +476,7 @@ export default function DawlanceRFC() {
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 md:gap-6">
         <RFCTable
-          permission={1}
+          permission={permission}
           branchFilter={false}
           rowData={filteredRowData}
           originalRowData={originalRowData}

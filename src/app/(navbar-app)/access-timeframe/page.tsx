@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -28,6 +28,7 @@ interface TimeFrameProps {
 
 export default function AccessTimeFrame() {
   const [timeFrameData, setTimeFrameData] = useState<TimeFrameProps[]>([]);
+  const [originalData, setOriginalData] = useState<TimeFrameProps[]>([]);
 
   useEffect(() => {
     FetchTimeFrames();
@@ -47,27 +48,59 @@ export default function AccessTimeFrame() {
         }
       );
       const data = await res.json();
-      const parsedData = (data?.data || []).map((item: any) => ({
-        Branch: item.Branch,
-        StartDate: item.StartDate
-          ? new Date(item.StartDate).toISOString().substring(0, 10)
-          : "",
-        EndDate: item.EndDate
-          ? new Date(item.EndDate).toISOString().substring(0, 10)
-          : "",
-        NumberOfDays: item.NumberOfDays || 0,
-        Error: "",
-      }));
+
+      const parsedData = (data?.data || []).map((item: any) => {
+        const start = new Date(item.StartDate);
+        const end = new Date(item.EndDate);
+        const days =
+          Math.floor(
+            (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+          ) + 1;
+
+        return {
+          Branch: item.Branch,
+          StartDate: item.StartDate
+            ? new Date(item.StartDate).toISOString().substring(0, 10)
+            : "",
+          EndDate: item.EndDate
+            ? new Date(item.EndDate).toISOString().substring(0, 10)
+            : "",
+          NumberOfDays: isNaN(days) ? undefined : days,
+          Error: "",
+        };
+      });
 
       setTimeFrameData(parsedData);
+      setOriginalData(parsedData);
     } catch (error) {
       console.error("Fetch error: ", error);
     }
   };
 
+  const isChanged = () => {
+    return JSON.stringify(timeFrameData) !== JSON.stringify(originalData);
+  };
+
+  const hasErrors = () => {
+    return timeFrameData.some((item) => item.Error);
+  };
+
   const getMonthEnd = (dateStr: string) => {
     const date = new Date(dateStr);
     return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  };
+
+  const handleStartDateChange = (index: number, value: string) => {
+    const updated = [...timeFrameData];
+    updated[index].StartDate = value;
+
+    // Recalculate based on new start + number of days
+    const days = updated[index].NumberOfDays;
+    if (days) {
+      handleDaysChange(index, days, updated);
+    } else {
+      setTimeFrameData(updated);
+    }
   };
 
   const handleDaysChange = (
@@ -77,7 +110,9 @@ export default function AccessTimeFrame() {
   ) => {
     const updated = dataOverride ? [...dataOverride] : [...timeFrameData];
 
-    if (!days || days <= 0 || isNaN(days)) {
+    const startDate = updated[index].StartDate;
+    // if (!startDate || isNaN(days) || days <= 0)
+    if (!startDate || days <= 0) {
       updated[index].NumberOfDays = undefined;
       updated[index].EndDate = "";
       updated[index].Error = "";
@@ -85,32 +120,42 @@ export default function AccessTimeFrame() {
       return;
     }
 
-    const startDate = updated[index].StartDate;
-    if (!startDate) return;
-
     const start = new Date(startDate);
     const end = new Date(start);
     end.setDate(start.getDate() + days - 1);
     const monthEnd = getMonthEnd(startDate);
 
     if (end > monthEnd) {
-      updated[index].Error = "End date exceeds current month.";
-      updated[index].EndDate = "";
+      if (
+        end.getDate() === monthEnd.getDate() &&
+        end.getMonth() === monthEnd.getMonth()
+      ) {
+        // Allow if it exactly lands on month-end
+        updated[index].EndDate = end.toISOString().split("T")[0];
+        updated[index].NumberOfDays = days;
+        updated[index].Error = "";
+      } else {
+        updated[index].EndDate = end.toISOString().split("T")[0];
+        updated[index].NumberOfDays = days;
+        updated[
+          index
+        ].Error = `Number too high — exceeds month-end (last valid day is ${monthEnd.getDate()})`;
+      }
     } else {
       updated[index].EndDate = end.toISOString().split("T")[0];
       updated[index].NumberOfDays = days;
       updated[index].Error = "";
     }
 
-    // Cascade logic for next rows
+    // Cascade logic
     for (let i = index + 1; i < updated.length; i++) {
       const prevEnd = updated[i - 1].EndDate;
       if (!prevEnd) break;
 
       const nextStart = new Date(prevEnd);
       nextStart.setDate(nextStart.getDate() + 1);
-
       const monthEnd = getMonthEnd(prevEnd);
+
       if (nextStart > monthEnd) {
         updated[i].StartDate = "";
         updated[i].EndDate = "";
@@ -123,11 +168,19 @@ export default function AccessTimeFrame() {
       const nextDays = updated[i].NumberOfDays || 0;
       newEnd.setDate(newEnd.getDate() + nextDays - 1);
 
-      if (nextDays && newEnd > monthEnd) {
-        updated[i].EndDate = "";
-        updated[i].Error = "End date exceeds current month.";
+      if (
+        nextDays &&
+        newEnd > monthEnd &&
+        !(
+          newEnd.getDate() === monthEnd.getDate() &&
+          newEnd.getMonth() === monthEnd.getMonth()
+        )
+      ) {
+        updated[i].EndDate = newEnd.toISOString().split("T")[0];
+        updated[i].Error = `Exceeds month-end (max ${monthEnd.getDate()})`;
       } else {
-        updated[i].EndDate = nextDays ? newEnd.toISOString().split("T")[0] : "";
+        updated[i].EndDate =
+          nextDays > 0 ? newEnd.toISOString().split("T")[0] : "";
         updated[i].Error = "";
       }
     }
@@ -135,27 +188,34 @@ export default function AccessTimeFrame() {
     setTimeFrameData(updated);
   };
 
-  const handlePost = () => {
+  const handlePost = async () => {
     const payload = timeFrameData.map(({ Branch, StartDate, EndDate }) => ({
       Branch,
-      StartDate,
-      EndDate,
+      start_date: StartDate,
+      end_date: EndDate,
     }));
 
-    console.log("Posting values:", payload);
-    // Call your API here with payload
-  };
-
-  const handleStartDateChange = (index: number, value: string) => {
-    const updated = [...timeFrameData];
-    updated[index].StartDate = value;
-
-    // Recalculate days for this row if days already exist
-    const days = updated[index].NumberOfDays;
-    if (days) {
-      handleDaysChange(index, days, updated);
-    } else {
-      setTimeFrameData(updated);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/bm-timeframes`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (res.ok) {
+        alert("Data posted successfully!");
+        setOriginalData(timeFrameData); // Reset original state
+      } else {
+        alert("Failed to post data");
+      }
+    } catch (err) {
+      console.error("Post error", err);
+      alert("Error while posting");
     }
   };
 
@@ -170,37 +230,32 @@ export default function AccessTimeFrame() {
           </TooltipTrigger>
           <TooltipContent
             side="bottom"
-            className="w-70 p-4 shadow-lg rounded-lg"
+            className="w-[280px] p-4 shadow-lg rounded-lg bg-popover bg-[#1c1917]"
           >
             <div className="text-sm font-semibold text-gray-400 mb-2 font-mono">
               Date Entry Tips
             </div>
-            <ul className="list-disc list-inside space-y-1 text-sm text-gray-200 font-mono">
+            <ul className="list-disc list-inside space-y-2 text-sm text-gray-200 font-mono">
+              <li>Only the first row’s start date can be edited manually.</li>
+              <li>Enter days to calculate end date automatically.</li>
               <li>
-                Enter the <span className="font-medium">Start Date</span> for
-                each branch manually.
+                If your days land on the <b>last date of the month</b>, it's
+                valid.
               </li>
               <li>
-                Specify <span className="font-medium">Number of Days</span> to
-                auto-calculate the End Date.
+                Going beyond will still show the result, but with an error.
               </li>
-
-              <li>
-                End Date must stay within the{" "}
-                <span className="font-medium">same month</span>.
-              </li>
-              <li>
-                The <span className="font-medium">next Start Date</span>{" "}
-                auto-adjusts to one day after the previous End Date.
-              </li>
-              <li>
-                Errors will appear if the calculated dates overflow into the
-                next month.
-              </li>
+              <li>Start and end dates will auto-cascade for each branch.</li>
             </ul>
           </TooltipContent>
         </Tooltip>
-        <Button onClick={handlePost}>
+        <Button
+          onClick={handlePost}
+          disabled={!isChanged() || hasErrors()}
+          className={
+            !isChanged() || hasErrors() ? "opacity-50 cursor-not-allowed" : ""
+          }
+        >
           <Send className="mr-2" />
           Post
         </Button>
@@ -229,6 +284,7 @@ export default function AccessTimeFrame() {
                       type="date"
                       className="py-0 text-center"
                       value={item.StartDate || ""}
+                      disabled={idx !== 0}
                       onChange={(e) =>
                         handleStartDateChange(idx, e.target.value)
                       }
@@ -248,9 +304,11 @@ export default function AccessTimeFrame() {
                         type="number"
                         className="py-0"
                         value={item.NumberOfDays || ""}
-                        onChange={(e) =>
-                          handleDaysChange(idx, parseInt(e.target.value, 10))
-                        }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const parsed = parseInt(val, 10);
+                          handleDaysChange(idx, val === "" ? 0 : parsed);
+                        }}
                       />
                       {item.Error && (
                         <span className="text-xs text-red-500 mt-1">

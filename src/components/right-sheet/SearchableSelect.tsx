@@ -135,7 +135,7 @@ export function SearchableSelectField({
           field.apiEndpoint,
           process.env.NEXT_PUBLIC_BASE_URL || window.location.origin
         );
-        url.searchParams.append("search", query);
+        url.searchParams.append("filt", query);
         url.searchParams.append("limit", "20");
 
         const response = await fetch(url.toString(), {
@@ -151,7 +151,6 @@ export function SearchableSelectField({
         }
 
         const data = await response.json();
-
         let searchableOptions: SearchableOption[] = [];
 
         // Handle different response formats
@@ -171,38 +170,12 @@ export function SearchableSelectField({
                   item.id,
           }));
         } else if (data && typeof data === "object") {
-          const possibleKeys = [
-            field.key.toLowerCase(),
-            field.key,
-            `${field.key.toLowerCase()}s`,
-            `${field.key}s`,
-            "data",
-            "items",
-            "results",
-          ];
+          const normalizedKey = field.key.toLowerCase().replace(/\s+/g, "_");
 
-          let dataArray = null;
-          for (const key of possibleKeys) {
-            if (data[key] && Array.isArray(data[key])) {
-              dataArray = data[key];
-              break;
-            }
-          }
-
-          if (dataArray) {
-            searchableOptions = dataArray.map((item: any) => ({
-              value:
-                typeof item === "string"
-                  ? item
-                  : item.value || item.id || item.name || item[field.key],
-              label:
-                typeof item === "string"
-                  ? item
-                  : item.label ||
-                    item.name ||
-                    item.value ||
-                    item[field.key] ||
-                    item.id,
+          if (Array.isArray(data[normalizedKey])) {
+            searchableOptions = data[normalizedKey].map((item: any) => ({
+              value: item,
+              label: item,
             }));
           }
         }

@@ -66,16 +66,20 @@ export default function PhaseIO() {
       readOnly: true,
     },
     {
-      key: "Phase Out",
-      label: "Phase Out",
-      type: "text",
-      required: true,
-    },
-    {
       key: "Phase In",
       label: "Phase In",
-      type: "text",
+      type: "conditional",
       required: true,
+      apiEndpoint: "/phaseinout/distinct/phase_in",
+      checkboxLabel: "Use date",
+    },
+    {
+      key: "Phase Out",
+      label: "Phase Out",
+      type: "conditional",
+      required: true,
+      apiEndpoint: "/phaseinout/distinct/phase_out",
+      checkboxLabel: "Use date",
     },
     {
       key: "Price Group",

@@ -134,9 +134,6 @@ export function ConditionalField({
       ) : (
         // Searchable select mode
         <div className="space-y-2">
-          <Label className="text-sm text-muted-foreground">
-            {field.searchLabel || "Search and select"}
-          </Label>
           <SearchableSelectField
             field={field}
             formData={formData}

@@ -64,8 +64,6 @@ export interface FieldConfig {
   dependsOn?: string;
   dependsOnValue?: string | string[];
   checkboxLabel?: string;
-  dateLabel?: string;
-  searchLabel?: string;
 }
 
 interface SelectOption {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// import { RightSheet } from "@/components/RightSheet";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   transformToApiFormat,
@@ -16,8 +15,8 @@ import type {
 } from "@/lib/types";
 import { DataTable } from "@/components/data-table/DataTable";
 import { cn } from "@/lib/utils";
-import SearchComponent from "@/components/SearchComponent";
 import { RightSheet } from "@/components/right-sheet/RightSheet";
+import SearchComponent from "@/components/SearchComponent";
 
 export default function PhaseIO() {
   const [selectedRow, setSelectedRow] = useState<RowDataType | null>(null);
@@ -78,8 +77,20 @@ export default function PhaseIO() {
       type: "text",
       required: true,
     },
-    { key: "Price Group", label: "Price Group", type: "text", required: true },
-    { key: "Sales Group", label: "Sales Group", type: "text", required: true },
+    {
+      key: "Price Group",
+      label: "Price Group",
+      type: "searchable-select",
+      apiEndpoint: "/phaseinout/distinct/price_group",
+      required: true,
+    },
+    {
+      key: "Sales Group",
+      label: "Sales Group",
+      type: "searchable-select",
+      apiEndpoint: "/phaseinout/distinct/sales_group",
+      required: true,
+    },
   ];
 
   const columns: readonly ColumnConfig[] = [

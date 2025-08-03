@@ -199,7 +199,6 @@ export default function BranchRFC() {
         setSummaryData(productData?.data);
 
         const permissionData = await permissionEndpointResponse.json();
-        console.log("the permission", permissionData?.data?.permission);
         setPermission(permissionData?.data?.permission);
 
         const data = await fetchEndpointResponse.json();

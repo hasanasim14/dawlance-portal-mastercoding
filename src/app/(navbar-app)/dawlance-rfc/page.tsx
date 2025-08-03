@@ -163,7 +163,6 @@ export default function DawlanceRFC() {
         setWarningMessage(data?.warning);
 
         const summaryData = await fetchSummaryDataResponse.json();
-        // console.log("the sumary data", summaryData);
         setSummaryData(summaryData?.data);
 
         if (parsedData && parsedData.data && Array.isArray(parsedData.data)) {
@@ -422,7 +421,6 @@ export default function DawlanceRFC() {
         const authToken = localStorage.getItem("token");
         const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc-save?${queryParams}`;
 
-        console.log("the endpoint, ", endpoint);
 
         const response = await fetch(endpoint, {
           method: "POST",

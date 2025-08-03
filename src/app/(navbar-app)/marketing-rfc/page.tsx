@@ -351,7 +351,6 @@ export default function MarketingRFC() {
     ) => {
       setSaving(true);
       try {
-        console.log("the changed Data", changedData);
 
         const query = new URLSearchParams({ month, year }).toString();
         // const authToken = localStorage.getItem("token");
@@ -411,7 +410,6 @@ export default function MarketingRFC() {
         // const authToken = localStorage.getItem("token");
         const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/marketing-rfc-save?${query}`;
 
-        console.log("the data", changedData);
 
         const response = await fetch(endpoint, {
           method: "POST",

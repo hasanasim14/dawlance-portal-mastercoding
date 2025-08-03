@@ -18,7 +18,9 @@ interface SearchableSelectFieldProps {
   field: FieldConfig & {
     apiEndpoint?: string;
   };
+  // eslint-disable-next-line
   formData: Record<string, any>;
+  // eslint-disable-next-line
   selectedRow?: Record<string, any> | null;
   hasChanges: boolean;
   onInputChange: (key: string, value: string) => void;
@@ -367,7 +369,7 @@ export function SearchableSelectField({
           !error && (
             <div className="absolute z-50 mt-1 w-full bg-background border rounded-md shadow-lg p-3">
               <div className="text-sm text-muted-foreground">
-                No results found for "{searchQuery}"
+                No results found for &quot;{searchQuery}&quot;
               </div>
             </div>
           )}

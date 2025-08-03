@@ -24,7 +24,9 @@ interface ConditionalFieldProps {
     dateLabel?: string;
     searchLabel?: string;
   };
+  // eslint-disable-next-line
   formData: Record<string, any>;
+  // eslint-disable-next-line
   selectedRow?: Record<string, any> | null;
   hasChanges: boolean;
   onInputChange: (key: string, value: string) => void;

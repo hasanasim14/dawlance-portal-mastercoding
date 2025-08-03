@@ -74,9 +74,9 @@ export default function PhaseIO() {
       checkboxLabel: "Use date",
     },
     {
-      key: "Phase Out",
-      label: "Phase Out",
-      type: "conditional",
+      key: "Phase In",
+      label: "Phase In",
+      type: "text",
       required: true,
       apiEndpoint: "/phaseinout/distinct/phase_out",
       checkboxLabel: "Use date",

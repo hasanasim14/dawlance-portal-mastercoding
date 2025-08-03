@@ -129,7 +129,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
 
           // eslint-disable-next-line
           branchList = branchList.filter((branch: any) =>
-            storedSalesOffices.includes(branch["Branch Code"])
+            storedSalesOffices.includes(branch["Sales Office"])
           );
         }
 

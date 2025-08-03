@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,13 @@ export function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const isToken = localStorage.getItem("token");
+    if (isToken) {
+      router.push("/master-coding");
+    }
+  }, []);
 
   // Email Validation Function
   const isValidEmail = (email: string) => {

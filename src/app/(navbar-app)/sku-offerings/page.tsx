@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import type { PaginationData, PermissionConfig } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
 import { Upload, Clock, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getNextMonthAndYear } from "@/lib/utils";
-import type { PaginationData } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -54,10 +54,11 @@ export default function SKUOfferings() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [permission, setPermission] = useState<PermissionConfig | null>(null);
   const [apiResponse, setApiResponse] = useState<{ data?: string[] } | null>(
     null
   );
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [pagination, setPagination] = useState<PaginationData>({
     total_records: 0,
@@ -85,21 +86,58 @@ export default function SKUOfferings() {
 
   useEffect(() => {
     const localProductValue = localStorage.getItem("product");
+
     const fetchMaterials = async () => {
       try {
-        const res = await fetch(
+        const token = localStorage.getItem("token");
+
+        const productPromise = fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/mastercoding/distinct/product`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
 
-        const data = await res.json();
-        const productList: string[] = data?.product ?? [];
+        // Only build lockPromise if month and year are present
+        const lockPromise =
+          selectedMonth && selectedYear
+            ? fetch(
+                `${process.env.NEXT_PUBLIC_BASE_URL}/rfc/lock?` +
+                  new URLSearchParams({
+                    month: selectedMonth,
+                    year: selectedYear,
+                    branch: "Offerings",
+                  }),
+                {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              )
+            : null;
+
+        const responses = await Promise.all([
+          productPromise,
+          lockPromise ?? Promise.resolve(null),
+        ]);
+
+        const productData = await responses[0].json();
+        const lockData = lockPromise ? await responses[1]?.json() : null;
+
+        if (lockData) {
+          setPermission({
+            post_allowed: lockData?.data?.permission?.post_allowed,
+            save_allowed: lockData?.data?.permission?.save_allowed,
+          });
+        }
+
+        const productList: string[] = productData?.product ?? [];
 
         if (!localProductValue || localProductValue === "All") {
           setProducts(productList);
@@ -111,12 +149,12 @@ export default function SKUOfferings() {
           setProducts(storedProducts);
         }
       } catch (error) {
-        console.error("Error fetching materials:", error);
+        console.error("Error fetching data:", error);
       }
     };
 
     fetchMaterials();
-  }, []);
+  }, [selectedMonth, selectedYear]);
 
   const fetchOffering = async (page = 1, recordsPerPage = 50) => {
     try {
@@ -391,22 +429,37 @@ export default function SKUOfferings() {
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                   isDragOver
                     ? "border-blue-400 bg-blue-50"
                     : "border-gray-300 hover:border-gray-400"
+                } ${
+                  permission?.post_allowed === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : "cursor-pointer"
                 }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={handleBrowseClick}
+                onDragOver={
+                  permission?.post_allowed === 0 ? undefined : handleDragOver
+                }
+                onDragLeave={
+                  permission?.post_allowed === 0 ? undefined : handleDragLeave
+                }
+                onDrop={permission?.post_allowed === 0 ? undefined : handleDrop}
+                onClick={
+                  permission?.post_allowed === 0 ? undefined : handleBrowseClick
+                }
               >
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept=".xlsx,.xls"
-                  onChange={handleFileSelect}
+                  onChange={
+                    permission?.post_allowed === 0
+                      ? undefined
+                      : handleFileSelect
+                  }
                   className="hidden"
+                  disabled={permission?.post_allowed === 0}
                 />
                 <div className="flex flex-col items-center space-y-4">
                   <Upload className="w-8 h-8 text-gray-400" />
@@ -419,6 +472,11 @@ export default function SKUOfferings() {
                   {selectedProducts.length === 0 && (
                     <p className="text-xs text-red-500">
                       Please select at least one product first
+                    </p>
+                  )}
+                  {permission?.post_allowed === 0 && (
+                    <p className="text-xs text-red-500">
+                      Posting is not allowed
                     </p>
                   )}
                 </div>

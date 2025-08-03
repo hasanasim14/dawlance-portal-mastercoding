@@ -150,8 +150,8 @@ export function RightSheet({
               }
             } else if (field.key === "product" || field.key === "products") {
               // Handle products API response
-              if (data.products && Array.isArray(data.products)) {
-                options = data.products.map((product: any) => ({
+              if (data.product && Array.isArray(data.product)) {
+                options = data.product.map((product: any) => ({
                   value:
                     typeof product === "string"
                       ? product
@@ -222,7 +222,6 @@ export function RightSheet({
 
   // Load branch options when role changes to "branch"
   useEffect(() => {
-    console.log("fetchin fata for branches");
     const loadBranchOptions = async () => {
       if (formData.role === "branch" && !selectOptionsCache.branch) {
         const branchField = effectiveFields.find(
@@ -247,7 +246,6 @@ export function RightSheet({
             if (!response.ok) throw new Error("Failed to fetch branch options");
 
             const data = await response.json();
-            console.log("the branch data is here", data);
             let options: SelectOption[] = [];
             if (data.sales_office && Array.isArray(data.sales_office)) {
               options = data.sales_office.map((code: string) => ({
@@ -281,7 +279,7 @@ export function RightSheet({
     const loadProductOptions = async () => {
       if (formData.role === "product_manager" && !selectOptionsCache.products) {
         const productField = effectiveFields.find(
-          (field) => field.key === "products"
+          (field) => field.key === "product"
         );
 
         if (
@@ -307,8 +305,8 @@ export function RightSheet({
             let options: SelectOption[] = [];
 
             // Handle different response formats for products
-            if (data.products && Array.isArray(data.products)) {
-              options = data.products.map((product: any) => ({
+            if (data.product && Array.isArray(data.product)) {
+              options = data.product.map((product: any) => ({
                 value:
                   typeof product === "string"
                     ? product
@@ -331,7 +329,7 @@ export function RightSheet({
               }));
             } else {
               // Handle other possible response formats
-              const possibleKeys = ["products", "product", "data", "items"];
+              const possibleKeys = ["product", "data", "items"];
               for (const key of possibleKeys) {
                 if (data[key] && Array.isArray(data[key])) {
                   options = data[key].map((product: any) => ({
@@ -541,7 +539,7 @@ export function RightSheet({
     }
 
     // Handle Multi-select fields for products - only show when role is "Product Manager"
-    if (field.key === "products") {
+    if (field.key === "product") {
       if (formData.role !== "product_manager") {
         return null;
       }

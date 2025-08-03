@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,21 +36,32 @@ export function SearchableSelectField({
   const [options, setOptions] = useState<SearchableOption[]>([]);
   const [allFetchedOptions, setAllFetchedOptions] = useState<
     SearchableOption[]
-  >([]); // Store all fetched options
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
   const [isValid, setIsValid] = useState(true);
   const [validationMessage, setValidationMessage] = useState("");
+  const [hasUserInteracted, setHasUserInteracted] = useState(false); // Track user interaction
+  const [initialLoad, setInitialLoad] = useState(true); // Track if this is initial load
 
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const currentValue = formData[field.key]?.toString() || "";
 
+  // Set initial load to false after component mounts
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialLoad(false);
+    }, 1000); // Give 1 second for initial data to load
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Validate current value against available options
-  const validateValue = (value: string) => {
+  const validateValue = (value: string, showError = true) => {
     if (!value.trim()) {
       setIsValid(true);
       setValidationMessage("");
@@ -63,7 +75,8 @@ export function SearchableSelectField({
 
     setIsValid(isValueValid);
 
-    if (!isValueValid) {
+    // Only show validation message if user has interacted and we should show errors
+    if (!isValueValid && showError && hasUserInteracted && !initialLoad) {
       setValidationMessage(
         `"${value}" is not a valid ${field.label.toLowerCase()}. Please select from the dropdown.`
       );
@@ -74,10 +87,21 @@ export function SearchableSelectField({
     onValidationChange?.(field.key, isValueValid);
   };
 
-  // Validate whenever the current value changes
+  // Validate whenever the current value changes, but don't show errors initially
   useEffect(() => {
-    validateValue(currentValue);
-  }, [currentValue, allFetchedOptions]);
+    // For existing entries, try to validate the value by fetching options first
+    if (
+      selectedRow &&
+      currentValue &&
+      allFetchedOptions.length === 0 &&
+      !hasUserInteracted
+    ) {
+      // Don't show validation errors for existing entries until user interacts
+      validateValue(currentValue, false);
+    } else {
+      validateValue(currentValue, hasUserInteracted && !initialLoad);
+    }
+  }, [currentValue, allFetchedOptions, hasUserInteracted, initialLoad]);
 
   // Debounced API search effect
   useEffect(() => {
@@ -109,12 +133,10 @@ export function SearchableSelectField({
         // Build the API endpoint with search query
         const url = new URL(
           field.apiEndpoint,
-          process.env.NEXT_PUBLIC_BASE_URL
+          process.env.NEXT_PUBLIC_BASE_URL || window.location.origin
         );
-        url.searchParams.append("filt", query);
-        // url.searchParams.append("limit", "20"); // Limit results for dropdown
-
-        console.log(`Fetching options from: ${url.toString()}`);
+        url.searchParams.append("search", query);
+        url.searchParams.append("limit", "20");
 
         const response = await fetch(url.toString(), {
           method: "GET",
@@ -129,13 +151,11 @@ export function SearchableSelectField({
         }
 
         const data = await response.json();
-        console.log(`API response for ${field.key}:`, data);
 
         let searchableOptions: SearchableOption[] = [];
 
         // Handle different response formats
         if (Array.isArray(data)) {
-          // Direct array response
           searchableOptions = data.map((item) => ({
             value:
               typeof item === "string"
@@ -151,28 +171,21 @@ export function SearchableSelectField({
                   item.id,
           }));
         } else if (data && typeof data === "object") {
-          // Handle nested response formats
+          const possibleKeys = [
+            field.key.toLowerCase(),
+            field.key,
+            `${field.key.toLowerCase()}s`,
+            `${field.key}s`,
+            "data",
+            "items",
+            "results",
+          ];
+
           let dataArray = null;
-
-          // Attempt direct match with field.key (lowercase)
-          const responseKeys = Object.keys(data);
-          for (const key of responseKeys) {
-            if (Array.isArray(data[key])) {
-              // Match based on normalized field key
-              const normalizedFieldKey = field.key
-                .toLowerCase()
-                .replace(/[^a-z0-9]/gi, "");
-              const normalizedResponseKey = key
-                .toLowerCase()
-                .replace(/[^a-z0-9]/gi, "");
-
-              if (
-                normalizedResponseKey === normalizedFieldKey ||
-                normalizedResponseKey === normalizedFieldKey + "s"
-              ) {
-                dataArray = data[key];
-                break;
-              }
+          for (const key of possibleKeys) {
+            if (data[key] && Array.isArray(data[key])) {
+              dataArray = data[key];
+              break;
             }
           }
 
@@ -191,22 +204,11 @@ export function SearchableSelectField({
                     item[field.key] ||
                     item.id,
             }));
-          } else {
-            console.warn(
-              `Could not find data array in response for field: ${field.key}`,
-              data
-            );
           }
         }
 
-        // Filter out any invalid options
         searchableOptions = searchableOptions.filter(
           (option) => option.value && option.label
-        );
-
-        console.log(
-          `Processed ${searchableOptions.length} options for ${field.key}:`,
-          searchableOptions
         );
 
         setOptions(searchableOptions);
@@ -262,16 +264,17 @@ export function SearchableSelectField({
   }, [isOpen]);
 
   const handleInputChange = (value: string) => {
+    setHasUserInteracted(true); // Mark that user has interacted
     setSearchQuery(value);
     onInputChange(field.key, value);
 
-    // Clear error when user starts typing
     if (error) {
       setError("");
     }
   };
 
   const handleOptionSelect = (option: SearchableOption) => {
+    setHasUserInteracted(true);
     setSearchQuery(option.value);
     onInputChange(field.key, option.value);
     setIsOpen(false);
@@ -282,16 +285,18 @@ export function SearchableSelectField({
   };
 
   const handleInputFocus = () => {
+    setHasUserInteracted(true);
     if (currentValue.trim().length >= 2 && options.length > 0) {
       setIsOpen(true);
     }
   };
 
   const handleInputBlur = () => {
-    // Validate the current value when user leaves the field
     setTimeout(() => {
-      validateValue(currentValue);
-    }, 100); // Small delay to allow for option selection
+      if (hasUserInteracted && !initialLoad) {
+        validateValue(currentValue, true);
+      }
+    }, 100);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -326,11 +331,15 @@ export function SearchableSelectField({
                 formData[field.key] !== selectedRow?.[field.key] &&
                 "border-orange-300",
               !isValid &&
+                hasUserInteracted &&
+                !initialLoad &&
                 "border-red-500 focus:border-red-500 focus:ring-red-500"
             )}
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            {!isValid && <AlertCircle className="h-4 w-4 text-red-500" />}
+            {!isValid && hasUserInteracted && !initialLoad && (
+              <AlertCircle className="h-4 w-4 text-red-500" />
+            )}
             {isLoading && (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             )}
@@ -366,8 +375,8 @@ export function SearchableSelectField({
           </div>
         )}
 
-        {/* Validation error message */}
-        {!isValid && validationMessage && (
+        {/* Validation error message - only show after user interaction */}
+        {!isValid && validationMessage && hasUserInteracted && !initialLoad && (
           <div className="flex items-center gap-1 text-xs text-red-500 mt-1">
             <AlertCircle className="h-3 w-3" />
             {validationMessage}

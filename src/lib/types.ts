@@ -55,13 +55,17 @@ export interface FieldConfig {
     | "tel"
     | "select"
     | "multi-select"
-    | "searchable-select";
+    | "searchable-select"
+    | "conditional";
   required?: boolean;
   readOnly?: boolean;
   selectOptions?: SelectOption[];
   apiEndpoint?: string;
   dependsOn?: string;
   dependsOnValue?: string | string[];
+  checkboxLabel?: string;
+  dateLabel?: string;
+  searchLabel?: string;
 }
 
 interface SelectOption {

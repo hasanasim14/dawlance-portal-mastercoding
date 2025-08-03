@@ -7,10 +7,16 @@ import { cn } from "@/lib/utils";
 import { ChevronRight, X, Loader2 } from "lucide-react";
 import { transformToApiFormat } from "@/lib/data-transformers";
 import type { FieldConfig } from "@/lib/types";
-import { MaterialField } from "./MaterialField";
 import { MultiSelectField } from "./MultiSelectField";
-import { FormField } from "./FormField";
+import { ConditionalField } from "./ConditionalField";
 import { SearchableSelectField } from "./SearchableSelect";
+import { FormField } from "./FormField";
+import { MaterialField } from "./MaterialField";
+// import { MaterialField } from "./form-fields/material-field";
+// import { MultiSelectField } from "./form-fields/multi-select-field";
+// import { FormField } from "./form-fields/form-field";
+// import { SearchableSelectField } from "./form-fields/searchable-select-field";
+// import { ConditionalField } from "./form-fields/conditional-field";
 
 interface SelectOption {
   value: string;
@@ -539,8 +545,8 @@ export function RightSheet({
     }
 
     // Handle Multi-select fields for products - only show when role is "Product Manager"
-    if (field.key === "product") {
-      if (formData.role !== "product_manager") {
+    if (field.key === "products") {
+      if (formData.role !== "Product Manager") {
         return null;
       }
       return (
@@ -553,6 +559,21 @@ export function RightSheet({
           options={selectOptionsCache[field.key] || []}
           isLoading={loadingSelects[field.key] || false}
           onInputChange={handleInputChange}
+        />
+      );
+    }
+
+    // Handle conditional fields (checkbox + searchable select OR date picker)
+    if (field.type === "conditional") {
+      return (
+        <ConditionalField
+          key={field.key}
+          field={field}
+          formData={formData}
+          selectedRow={selectedRow}
+          hasChanges={hasChanges}
+          onInputChange={handleInputChange}
+          onValidationChange={handleValidationChange}
         />
       );
     }

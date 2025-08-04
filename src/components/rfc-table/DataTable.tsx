@@ -12,14 +12,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { ColumnConfig, RowDataType } from "@/lib/types";
+import type { ColumnConfig, PermissionConfig, RowDataType } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { RFCTableHeaders } from "./DataTableHeaders";
 import { ColumnFilter } from "./ColumnFilter";
 import AnnualRFCModal from "./AnnualRFCModal";
+import { Button } from "../ui/button";
 
 interface DataTableProps {
-  permission: number;
+  permission: PermissionConfig | null;
   branchFilter: boolean;
   rowData: RowDataType[];
   originalRowData: RowDataType[];
@@ -57,6 +58,7 @@ interface DataTableProps {
   summaryData: any[];
   option: string;
   warningMessage: string;
+  autoSaveCheck?: () => void;
 }
 
 // material object interface
@@ -87,9 +89,8 @@ export const RFCTable: React.FC<DataTableProps> = ({
   summaryData,
   option,
   warningMessage,
+  autoSaveCheck,
 }) => {
-  console.log("the columns", columns);
-
   // State for tracking which rows have been modified
   const [modifiedRows, setModifiedRows] = useState<Set<string>>(new Set());
   // eslint-disable-next-line
@@ -105,6 +106,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
     month: "",
     year: "",
   });
+  const [canPost, setCanPost] = useState(false);
 
   const handleMaterialClick = (
     material: string,
@@ -324,8 +326,65 @@ export const RFCTable: React.FC<DataTableProps> = ({
     }
   }, [originalRowData]);
 
+  //debugging
+
+  const getEditableRFCColumns = () => {
+    return rfcColumns.filter((col) => {
+      const key = col.key;
+      return (
+        key.includes("RFC") &&
+        key.endsWith(" RFC") &&
+        !key.includes("Branch") &&
+        !key.includes("Marketing") &&
+        !key.includes("Last")
+      );
+    });
+  };
+
+  const areAllEditableRFCInputsFilled = (): boolean => {
+    const editableRFCColumns = getEditableRFCColumns();
+
+    return rowData.every((row) => {
+      const rowKey = getRowKey(row);
+      const edits = editedValues[rowKey] || {};
+
+      return editableRFCColumns.every((col) => {
+        const edited = edits[col.key];
+        const original = row[col.key];
+        const value = edited !== undefined ? edited : original;
+
+        const isFilled =
+          value !== "" && value !== null && !isNaN(Number(value));
+
+        if (!isFilled) {
+          console.log("Missing value:", {
+            material: row["Material"],
+            column: col.key,
+            value,
+          });
+        }
+
+        return isFilled;
+      });
+    });
+  };
+
+  const handleAutoSaveSignal = () => {
+    autoSaveCheck?.();
+  };
+
+  useEffect(() => {
+    setCanPost(areAllEditableRFCInputsFilled());
+  }, [rowData, editedValues, rfcColumns]);
+
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
+      {/* <Button disabled={areAllRFCFieldsFilled()}>Submit All RFCs</Button> */}
+
+      <Button disabled={!areAllEditableRFCInputsFilled()}>
+        Submit All RFCs
+      </Button>
+
       <RFCTableHeaders
         option={option}
         permission={permission}
@@ -348,7 +407,8 @@ export const RFCTable: React.FC<DataTableProps> = ({
         onDateChange={(month: string, year: string) =>
           setDates({ month, year })
         }
-        // onAutoSave={handleAutoSaveSignal}
+        onAutoSave={handleAutoSaveSignal}
+        canUserPost={canPost}
       />
 
       <div className="flex-1 overflow-hidden rounded-lg border bg-card shadow-sm m-2 p-2">
@@ -498,7 +558,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
                                     handleCellBlur();
                                   }
                                 }}
-                                disabled={permission == 0}
+                                // disabled={permission == 0}
                                 className="w-full h-7 sm:h-8 text-xs sm:text-sm"
                                 placeholder=""
                               />

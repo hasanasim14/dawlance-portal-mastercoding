@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Save, Send, Loader2, FilterX } from "lucide-react";
-import type { RowDataType, ColumnConfig } from "@/lib/types";
+import type { RowDataType, ColumnConfig, PermissionConfig } from "@/lib/types";
 import { getNextMonthAndYear } from "@/lib/utils";
 import DateFilter from "../DateFilter";
 import SummaryTable from "./SummaryTable";
@@ -25,7 +25,7 @@ interface BranchOption {
 
 interface HeadersProps {
   option: string;
-  permission: number;
+  permission: PermissionConfig | null;
   branchFilter: boolean;
   onPost: (
     branch: string,
@@ -60,7 +60,8 @@ interface HeadersProps {
   summaryData: any[];
   warningMessage: string;
   onDateChange?: (month: string, year: string) => void;
-  editableColumns?: ColumnConfig[];
+  onAutoSave?: () => void;
+  canUserPost?: boolean;
 }
 
 export const RFCTableHeaders: React.FC<HeadersProps> = ({
@@ -82,6 +83,8 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
   summaryData,
   warningMessage,
   onDateChange,
+  onAutoSave,
+  canUserPost,
 }) => {
   const [branches, setBranches] = useState<BranchOption[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string>(
@@ -279,9 +282,9 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
     return changedRecords.length > 0 && !validateAllRowsEdited();
   };
 
-  // Check if post is allowed (all rows have been edited)
+  // Check if post is allowed (all RFC fields are filled regardless of edit status)
   const canPost = () => {
-    return validateAllRowsEdited();
+    return validateAllRFCFieldsFilled();
   };
 
   // Check if there are active filters
@@ -357,6 +360,10 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
 
   const isFormValid = selectedBranch && selectedMonth && selectedYear;
 
+  const handleAutoSaveSignal = () => {
+    onAutoSave?.();
+  };
+
   return (
     <div>
       <div className="flex items-center gap-4 p-2 justify-between bg-background/50 flex-shrink-0">
@@ -411,7 +418,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
                 !canSave() ||
                 isSaving ||
                 isPosting ||
-                permission == 0
+                permission?.save_allowed == 0
               }
               variant="outline"
               size="sm"
@@ -430,13 +437,12 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
             </Button>
             <Button
               onClick={handlePost}
-              // disabled={
-              //   !isFormValid ||
-              //   !canPost() ||
-              //   isSaving ||
-              //   isPosting ||
-              //   permission?.post_allowed == 0
-              // }
+              disabled={
+                isSaving ||
+                isPosting ||
+                !canUserPost ||
+                permission?.post_allowed == 0
+              }
               size="sm"
             >
               {isPosting ? (

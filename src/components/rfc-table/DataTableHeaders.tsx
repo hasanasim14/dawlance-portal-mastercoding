@@ -233,38 +233,37 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
   const getChangedRecords = () => {
     if (!rfcColumns.length) return [];
 
-    const changedRecords: Array<{ material: string; [key: string]: any }> = [];
+    const changedRecords: Array<{ material: string; rfc: number }> = [];
 
     originalRowData.forEach((row) => {
       const rowKey = getRowKey(row);
       const edits = editedValues[rowKey];
 
-      const material = String(row["Material"] || "");
-      const record: { material: string; [key: string]: any } = { material };
+      let totalRfc = 0;
+      let hasValidRfc = false;
 
-      if (option === "Dawlance") {
-        rfcColumns.forEach((rfcColumn, index) => {
-          const value =
-            edits && rfcColumn.key in edits
-              ? edits[rfcColumn.key]
-              : row[rfcColumn.key];
+      rfcColumns.forEach((rfcColumn) => {
+        const key = rfcColumn.key;
+        const value = edits && key in edits ? edits[key] : row[key];
 
-          record[`rfc-${index}`] = Number(value) || 0;
+        if (
+          value !== "" &&
+          value !== "0" &&
+          value !== 0 &&
+          value !== null &&
+          value !== undefined
+        ) {
+          totalRfc += Number(value);
+          hasValidRfc = true;
+        }
+      });
+
+      if (hasValidRfc && totalRfc > 0) {
+        changedRecords.push({
+          material: String(row["Material"] || ""),
+          rfc: totalRfc,
         });
-      } else {
-        let totalRfc = 0;
-        rfcColumns.forEach((rfcColumn) => {
-          const value =
-            edits && rfcColumn.key in edits
-              ? edits[rfcColumn.key]
-              : row[rfcColumn.key];
-
-          totalRfc += Number(value) || 0;
-        });
-        record["rfc"] = totalRfc;
       }
-
-      changedRecords.push(record);
     });
 
     return changedRecords;
@@ -329,7 +328,6 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
         return;
       }
       const changedRecords = getChangedRecords();
-      console.log("the canfed", changedRecords);
       await onSave(selectedBranch, selectedMonth, selectedYear, changedRecords);
     }
   };

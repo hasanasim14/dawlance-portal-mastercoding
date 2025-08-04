@@ -31,7 +31,7 @@ export type RowDataType = {
 
 export type SortConfig = {
   key: keyof RowDataType;
-  direction: "asc" | "desc";
+  // direction: "asc" | "desc";
 } | null;
 
 export type FilterConfig = {

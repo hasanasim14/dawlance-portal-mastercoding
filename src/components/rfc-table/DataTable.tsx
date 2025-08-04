@@ -145,6 +145,19 @@ export const RFCTable: React.FC<DataTableProps> = ({
     });
   }, []);
 
+  // Helper function to safely convert value to number or preserve null/empty
+  const convertToNumberOrNull = (value: string | null | undefined) => {
+    if (value === null || value === undefined) {
+      return "";
+    }
+    if (value === "") {
+      return ""; // preserve empty string intentionally set by user
+    }
+
+    const numValue = Number(value);
+    return isNaN(numValue) ? "" : numValue;
+  };
+
   // Check if all RFC values are filled for all rows
   const checkAllRFCValuesFilled = useCallback(() => {
     const allRFCColumns = getRFCColumns();
@@ -202,6 +215,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
   const prepareChangedData = useCallback(() => {
     // eslint-disable-next-line
     const changedData: Array<{ material: string; [key: string]: any }> = [];
+
     // Get all RFC columns
     const allRFCColumns = getRFCColumns();
 
@@ -210,6 +224,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
       const originalRow = originalRowDataRef.current.find(
         (row) => getRowKey(row) === rowKey
       );
+
       if (!originalRow) return;
 
       const material = String(originalRow["Material"] || "");
@@ -223,6 +238,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
       allRFCColumns.forEach((rfcColumn, index) => {
         const editedValue = rowEdits[rfcColumn.key];
         const originalValue = String(originalRow[rfcColumn.key] || "");
+
         // Use edited value if available, otherwise use original value
         const finalValue =
           editedValue !== undefined ? editedValue : originalValue;
@@ -230,10 +246,12 @@ export const RFCTable: React.FC<DataTableProps> = ({
         if (option === "dawlance") {
           const reversedIndex = allRFCColumns.length - 1 - index;
           const fieldName = `rfc-${reversedIndex}`;
-          rowData[fieldName] = Number(finalValue);
+          // Use the helper function to properly handle null/empty values
+          rowData[fieldName] = convertToNumberOrNull(finalValue);
         } else {
           if (rowData.rfc === undefined) {
-            rowData.rfc = finalValue;
+            // Use the helper function to properly handle null/empty values
+            rowData.rfc = convertToNumberOrNull(finalValue);
           }
         }
       });
@@ -272,6 +290,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
   ) => {
     const rowKey = getRowKey(row);
     const currentRowEdits = editedValues[rowKey] || {};
+
     const newEditedValues = {
       ...editedValues,
       [rowKey]: {
@@ -290,7 +309,8 @@ export const RFCTable: React.FC<DataTableProps> = ({
 
   // Handle cell edit end
   const handleCellBlur = () => {
-    setEditingCell(null);
+    // setEditingCell(null);
+    setEditingCell("");
     // Flush the debounce to ensure the last change is saved immediately
     debouncedAutoSave.flush();
   };
@@ -305,8 +325,10 @@ export const RFCTable: React.FC<DataTableProps> = ({
     const rowKey = getRowKey(row);
     const rowEdits = editedValues[rowKey];
     const editedValue = rowEdits?.[columnKey];
+
     const finalValue =
       editedValue !== undefined ? editedValue : String(originalValue ?? "");
+
     return finalValue;
   };
 
@@ -369,6 +391,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
           setDates({ month, year })
         }
       />
+
       <div className="flex-1 overflow-hidden rounded-lg border bg-card shadow-sm m-2 p-2">
         <div className="h-full w-full overflow-auto">
           <Table className="relative w-full">
@@ -377,6 +400,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
                 {columns.map((column) => {
                   const isFilterable = filterableColumns.includes(column.key);
                   const hasActiveFilter = columnFilters[column.key]?.length > 0;
+
                   return (
                     <TableHead
                       key={column.key}
@@ -415,6 +439,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
                 })}
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {isLoading ? (
                 <TableRow>
@@ -468,6 +493,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
                         !column.key.includes("Branch") &&
                         !column.key.includes("Marketing") &&
                         !column.key.includes("Last");
+
                       const isEditable = isRFCColumn;
                       const cellValue = getCellValue(
                         row,
@@ -491,16 +517,13 @@ export const RFCTable: React.FC<DataTableProps> = ({
                             <div className="relative">
                               <Input
                                 type="number"
-                                min={0}
-                                value={cellValue}
+                                value={cellValue === "" ? undefined : cellValue}
                                 onChange={(e) => {
                                   const rawValue = e.target.value;
-
                                   if (rawValue === "") {
                                     handleCellChange(row, column.key, "");
                                     return;
                                   }
-
                                   const newValue = Number(rawValue);
                                   handleCellChange(
                                     row,
@@ -531,6 +554,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
             </TableBody>
           </Table>
         </div>
+
         <AnnualRFCModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}

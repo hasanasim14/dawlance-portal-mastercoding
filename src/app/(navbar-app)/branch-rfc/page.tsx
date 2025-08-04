@@ -40,24 +40,18 @@ export default function BranchRFC() {
   const generateColumnsFromData = (
     data: RowDataType[]
   ): readonly ColumnConfig[] => {
-    if (!data || data.length === 0) {
-      return [];
-    }
+    if (!data || data.length === 0) return [];
 
-    // Get all unique keys from the first row
     const firstRow = data[0];
     const keys = Object.keys(firstRow);
-
-    // Define the preferred order of columns
     const columnOrder = [
-      // "Branch",
+      "Branch",
       "Material",
       "Material Description",
       "Product",
       "Last RFC",
     ];
 
-    // Separate known columns from dynamic ones
     const knownColumns: string[] = [];
     const dynamicColumns: string[] = [];
 
@@ -69,34 +63,49 @@ export default function BranchRFC() {
       }
     });
 
-    // Sort known columns by preferred order
     knownColumns.sort(
       (a, b) => columnOrder.indexOf(a) - columnOrder.indexOf(b)
     );
 
-    // Sort dynamic columns (sales columns first, then RFC columns)
     dynamicColumns.sort((a, b) => {
       const aIsSales = a.includes("Sales");
       const bIsSales = b.includes("Sales");
       const aIsRFC = a.includes("RFC");
       const bIsRFC = b.includes("RFC");
 
-      // Sales columns come first
       if (aIsSales && !bIsSales) return -1;
       if (!aIsSales && bIsSales) return 1;
-
-      // Then RFC columns
       if (aIsRFC && !bIsRFC) return 1;
       if (!aIsRFC && bIsRFC) return -1;
 
-      // Alphabetical for same type
+      if (aIsRFC && bIsRFC) {
+        const parseDate = (label: string) => {
+          const [monthStr, yearStr] = label.trim().split(" ")[0].split("-");
+          const months = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ];
+          return new Date(Number(yearStr), months.indexOf(monthStr));
+        };
+        // return parseDate(a) - parseDate(b);
+        return parseDate(a).getTime() - parseDate(b).getTime();
+      }
+
       return a.localeCompare(b);
     });
 
-    // Combine all columns in order
     const orderedKeys = [...knownColumns, ...dynamicColumns];
 
-    // Convert to ColumnConfig format
     return orderedKeys.map((key) => ({
       key,
       label: key,

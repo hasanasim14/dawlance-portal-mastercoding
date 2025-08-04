@@ -126,7 +126,7 @@ export default function DawlanceRFC() {
 
       try {
         const queryParams = new URLSearchParams({
-          branch,
+          // branch,
           month,
           year,
         });
@@ -141,7 +141,7 @@ export default function DawlanceRFC() {
           process.env.NEXT_PUBLIC_BASE_URL
         }/dawlance-rfc-product?${queryParams.toString()}`;
 
-        queryParams.delete("branch");
+        // queryParams.delete("branch");
         queryParams.append("branch", "Dawlance");
 
         // get permission data
@@ -182,7 +182,6 @@ export default function DawlanceRFC() {
         setWarningMessage(data?.warning);
 
         const summaryData = await fetchSummaryDataResponse.json();
-        console.log("the summary data", summaryData);
         setSummaryData(summaryData?.data);
 
         // setting permission data
@@ -198,11 +197,13 @@ export default function DawlanceRFC() {
           ) as RowDataType[];
 
           setOriginalRowData(transformedData);
+          console.log("transformedData", transformedData);
           const filtered = applyFiltersToData(transformedData, columnFilters);
           setFilteredRowData(filtered);
 
           // Generate columns based on actual response data
           const generatedColumns = generateColumnsFromData(transformedData);
+         console.log("generatedColumns",generatedColumns)
           setColumns(generatedColumns);
           setEditedValues({});
         } else {

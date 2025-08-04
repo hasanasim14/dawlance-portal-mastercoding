@@ -1,7 +1,5 @@
 "use client";
-
 import type React from "react";
-import debounce from "lodash.debounce";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,6 +15,7 @@ import { Loader2 } from "lucide-react";
 import { RFCTableHeaders } from "./DataTableHeaders";
 import { ColumnFilter } from "./ColumnFilter";
 import AnnualRFCModal from "./AnnualRFCModal";
+import debounce from "lodash.debounce";
 
 interface DataTableProps {
   permission: PermissionConfig | null;
@@ -88,13 +87,11 @@ export const RFCTable: React.FC<DataTableProps> = ({
   option,
   warningMessage,
 }) => {
-
   // State for tracking which rows have been modified
   const [modifiedRows, setModifiedRows] = useState<Set<string>>(new Set());
   // eslint-disable-next-line
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  // const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<SelectedMaterial>({
     material_id: null,
     material_description: null,
@@ -133,17 +130,10 @@ export const RFCTable: React.FC<DataTableProps> = ({
     return `${row["Material"] || ""}_${row["Branch"] || ""}`;
   };
 
-  // Reset modified rows when data changes, but preserve edited values
-  useEffect(() => {
-    setModifiedRows(new Set());
-    setEditingCell(null);
-  }, [originalRowData]);
-
   // Get all RFC columns (excluding "Last RFC")
   const getRFCColumns = useCallback(() => {
     return columnsRef.current.filter((col) => {
       const key = col.key;
-
       // Match if RFC appears at end OR has a trailing space after RFC
       const isRFC =
         key.includes("RFC") &&
@@ -151,28 +141,67 @@ export const RFCTable: React.FC<DataTableProps> = ({
         !key.includes("Branch") &&
         !key.includes("Marketing") &&
         !key.includes("Last");
-
       return isRFC;
     });
   }, []);
 
-  // debugging
-  // const getRFCColumnsWithTrailingSpace = useCallback(() => {
-  //   return columnsRef.current.filter((col) => {
-  //     const key = col.key;
-  //     const isTrailingSpaceRFC = key.includes("RFC") && key.endsWith("RFC");
+  // Check if all RFC values are filled for all rows
+  const checkAllRFCValuesFilled = useCallback(() => {
+    const allRFCColumns = getRFCColumns();
+    const modifiedRowsSet = new Set<string>();
 
-  //     return isTrailingSpaceRFC;
-  //   });
-  // }, []);
+    for (const row of originalRowDataRef.current) {
+      const rowKey = getRowKey(row);
+      let hasAllValues = true;
+      let hasAnyValue = false;
 
-  // const trailingSpaceRFCCount = getRFCColumnsWithTrailingSpace().length;
+      for (const rfcColumn of allRFCColumns) {
+        const editedValue = editedValuesRef.current[rowKey]?.[rfcColumn.key];
+        const originalValue = String(row[rfcColumn.key] || "");
+        const finalValue =
+          editedValue !== undefined ? editedValue : originalValue;
+
+        // Check if value exists and is not empty
+        const hasValue =
+          finalValue !== "" &&
+          finalValue !== "0" &&
+          finalValue !== null &&
+          finalValue !== undefined;
+
+        if (hasValue) {
+          hasAnyValue = true;
+        } else {
+          hasAllValues = false;
+        }
+      }
+
+      // If row has any RFC values filled, consider it modified
+      if (hasAnyValue) {
+        modifiedRowsSet.add(rowKey);
+      }
+
+      // If any row doesn't have all values filled, return false
+      if (!hasAllValues && hasAnyValue) {
+        return false;
+      }
+    }
+
+    // Update modified rows based on actual data state
+    setModifiedRows(modifiedRowsSet);
+
+    // Return true if all rows that have any values also have all values filled
+    return modifiedRowsSet.size > 0;
+  }, [getRFCColumns]);
+
+  // Update modified rows whenever editedValues or originalRowData changes
+  useEffect(() => {
+    checkAllRFCValuesFilled();
+  }, [editedValues, originalRowData]);
 
   // Prepare changed data for API call - collects all RFC values for modified rows
   const prepareChangedData = useCallback(() => {
     // eslint-disable-next-line
     const changedData: Array<{ material: string; [key: string]: any }> = [];
-
     // Get all RFC columns
     const allRFCColumns = getRFCColumns();
 
@@ -194,7 +223,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
       allRFCColumns.forEach((rfcColumn, index) => {
         const editedValue = rowEdits[rfcColumn.key];
         const originalValue = String(originalRow[rfcColumn.key] || "");
-
         // Use edited value if available, otherwise use original value
         const finalValue =
           editedValue !== undefined ? editedValue : originalValue;
@@ -208,15 +236,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
             rowData.rfc = finalValue;
           }
         }
-
-        // const reversedIndex = allRFCColumns.length - 1 - index;
-
-        // if (allRFCColumns.length !== 1) {
-        //   const fieldName = `rfc-${reversedIndex}`;
-        //   rowData[fieldName] = Number(finalValue);
-        // } else {
-        //   rowData.rfc = finalValue;
-        // }
       });
 
       // Only add if there are actual changes in this row
@@ -264,8 +283,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
     if (onEditedValuesChange) {
       onEditedValuesChange(newEditedValues);
     }
-
-    setModifiedRows((prev) => new Set([...prev, rowKey]));
 
     // Trigger debounced autosave
     debouncedAutoSave();
@@ -352,7 +369,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
           setDates({ month, year })
         }
       />
-
       <div className="flex-1 overflow-hidden rounded-lg border bg-card shadow-sm m-2 p-2">
         <div className="h-full w-full overflow-auto">
           <Table className="relative w-full">
@@ -361,20 +377,16 @@ export const RFCTable: React.FC<DataTableProps> = ({
                 {columns.map((column) => {
                   const isFilterable = filterableColumns.includes(column.key);
                   const hasActiveFilter = columnFilters[column.key]?.length > 0;
-
                   return (
                     <TableHead
                       key={column.key}
-                      className={`text-sm whitespace-nowrap bg-[#f5f5f4]
-  ${
-    column.key === "Material" &&
-    "sticky left-0 z-30 w-[120px] min-w-[120px] max-w-[120px]"
-  }
-  ${
-    column.key === "Material Description" &&
-    "sticky left-[120px] z-20 w-[240px] min-w-[240px] max-w-[240px]"
-  }
-`}
+                      className={`text-sm whitespace-nowrap bg-[#f5f5f4] ${
+                        column.key === "Material" &&
+                        "sticky left-0 z-30 w-[120px] min-w-[120px] max-w-[120px]"
+                      } ${
+                        column.key === "Material Description" &&
+                        "sticky left-[120px] z-20 w-[240px] min-w-[240px] max-w-[240px]"
+                      }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
@@ -432,7 +444,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
                     key={getRowKey(row)}
                     onClick={(e) => {
                       const target = e.target as HTMLElement;
-
                       if (
                         target.closest("input") ||
                         target.closest("button") ||
@@ -441,8 +452,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
                       ) {
                         return;
                       }
-
-                      // handleMaterialClick(String(row["Material"] ?? ""));
                       handleMaterialClick(
                         String(row["Material"] ?? ""),
                         String(row["Material Description"] ?? "")
@@ -469,40 +478,43 @@ export const RFCTable: React.FC<DataTableProps> = ({
                       return (
                         <TableCell
                           key={column.key}
-                          className={`
-  bg-background text-sm whitespace-nowrap
-  ${
-    column.key === "Material" &&
-    "sticky left-0 z-30 bg-background w-[120px] min-w-[120px] max-w-[120px]"
-  }
-  ${
-    column.key === "Material Description" &&
-    "sticky left-[120px] z-20 bg-background w-[240px] min-w-[240px] max-w-[240px]"
-  }
-`}
+                          className={`bg-background text-sm whitespace-nowrap ${
+                            column.key === "Material" &&
+                            "sticky left-0 z-30 bg-background w-[120px] min-w-[120px] max-w-[120px]"
+                          } ${
+                            column.key === "Material Description" &&
+                            "sticky left-[120px] z-20 bg-background w-[240px] min-w-[240px] max-w-[240px]"
+                          }`}
                           title={String(row[column.key] ?? "")}
                         >
                           {isEditable ? (
                             <div className="relative">
                               <Input
                                 type="number"
+                                min={0}
                                 value={cellValue}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const rawValue = e.target.value;
+
+                                  if (rawValue === "") {
+                                    handleCellChange(row, column.key, "");
+                                    return;
+                                  }
+
+                                  const newValue = Number(rawValue);
                                   handleCellChange(
                                     row,
                                     column.key,
-                                    e.target.value
-                                  )
-                                }
+                                    String(newValue < 0 ? 0 : newValue)
+                                  );
+                                }}
                                 onBlur={handleCellBlur}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter" || e.key === "Escape") {
                                     handleCellBlur();
                                   }
                                 }}
-                                // disabled={permission == 0}
                                 className="w-full h-7 sm:h-8 text-xs sm:text-sm"
-                                placeholder=""
                               />
                             </div>
                           ) : (

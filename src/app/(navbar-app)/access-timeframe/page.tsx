@@ -11,13 +11,14 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Info, Send } from "lucide-react";
+import { Info, Loader2, Send } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface TimeFrameProps {
   Branch: string;
@@ -30,6 +31,7 @@ interface TimeFrameProps {
 export default function AccessTimeFrame() {
   const [timeFrameData, setTimeFrameData] = useState<TimeFrameProps[]>([]);
   const [originalData, setOriginalData] = useState<TimeFrameProps[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     FetchTimeFrames();
@@ -99,6 +101,10 @@ export default function AccessTimeFrame() {
   const hasErrors = useCallback(() => {
     return timeFrameData.some((item) => item.Error);
   }, [timeFrameData]);
+
+  const isComplete = timeFrameData.every(
+    (item) => item.StartDate && item.EndDate && item.NumberOfDays !== null
+  );
 
   const getMonthEnd = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -229,6 +235,7 @@ export default function AccessTimeFrame() {
     }));
 
     try {
+      setLoading(true);
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/bm-timeframes`,
         {
@@ -249,10 +256,12 @@ export default function AccessTimeFrame() {
     } catch (err) {
       console.error("Post error", err);
       toast.error("Failed to save data. Please try again later");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const disabled = !isChanged() || hasErrors();
+  const disabled = !isChanged() || hasErrors() || !isComplete;
 
   return (
     <div className="w-full flex flex-col overflow-hidden p-4 space-y-4 h-[85vh]">
@@ -286,11 +295,22 @@ export default function AccessTimeFrame() {
         </Tooltip>
         <Button
           onClick={handlePost}
-          disabled={disabled}
-          className={disabled ? "opacity-50 cursor-not-allowed" : ""}
+          disabled={disabled || loading}
+          className={cn(
+            disabled || loading ? "opacity-50 cursor-not-allowed" : ""
+          )}
         >
-          <Send className="mr-2" />
-          Post
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Posting...
+            </>
+          ) : (
+            <>
+              <Send className="mr-2" />
+              Post
+            </>
+          )}
         </Button>
       </div>
 

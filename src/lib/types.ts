@@ -56,7 +56,8 @@ export interface FieldConfig {
     | "select"
     | "multi-select"
     | "searchable-select"
-    | "conditional";
+    | "conditional"
+    | "date";
   required?: boolean;
   readOnly?: boolean;
   selectOptions?: SelectOption[];

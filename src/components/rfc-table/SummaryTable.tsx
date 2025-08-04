@@ -71,28 +71,34 @@ const SummaryTable = ({
           {summaryData.length > 0 ? (
             summaryData.map((item, idx) => (
               <TableRow key={idx} className="hover:bg-muted/50">
-                {headers.map((key, colIndex) => (
-                  <TableCell key={key}>
-                    {option === "dawlance" &&
-                    colIndex === headers.length - 1 ? (
-                      <input
-                        type="number"
-                        className="w-full border rounded px-2 py-1 text-sm"
-                        defaultValue={item[key]}
-                        onBlur={(e) => {
-                          const value = parseFloat(e.target.value);
-                          if (!isNaN(value)) {
-                            handleAutoSave(item["Product"], value); // adjust key if needed
-                          }
-                        }}
-                      />
-                    ) : item[key] !== null && item[key] !== undefined ? (
-                      item[key]
-                    ) : (
-                      " "
-                    )}
-                  </TableCell>
-                ))}
+                {headers.map((key) => {
+                  const isRFC = key.includes("RFC");
+                  const endsWithSpace = key.endsWith(" ");
+                  const shouldShowInput =
+                    option === "dawlance" && isRFC && !endsWithSpace;
+
+                  return (
+                    <TableCell key={key}>
+                      {shouldShowInput ? (
+                        <input
+                          type="number"
+                          className="w-full border rounded px-2 py-1 text-sm"
+                          defaultValue={item[key]}
+                          onBlur={(e) => {
+                            const value = parseFloat(e.target.value);
+                            if (!isNaN(value)) {
+                              handleAutoSave(item["Product"], value);
+                            }
+                          }}
+                        />
+                      ) : item[key] !== null && item[key] !== undefined ? (
+                        item[key]
+                      ) : (
+                        " "
+                      )}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))
           ) : (

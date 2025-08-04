@@ -182,6 +182,7 @@ export default function DawlanceRFC() {
         setWarningMessage(data?.warning);
 
         const summaryData = await fetchSummaryDataResponse.json();
+        console.log("the summary data", summaryData);
         setSummaryData(summaryData?.data);
 
         // setting permission data

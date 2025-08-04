@@ -75,6 +75,7 @@ interface SelectOption {
 export type ColumnConfig = {
   key: string;
   label: string;
+  editable?: boolean;
 };
 
 export type PermissionConfig = {

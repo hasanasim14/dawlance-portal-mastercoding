@@ -336,10 +336,10 @@ export default function DawlanceRFC() {
         });
 
         // If no changes to post, show message
-        if (postData.length === 0) {
-          alert("No changes to post. Please edit some RFC values first.");
-          return;
-        }
+        // if (postData.length === 0) {
+        //   alert("No changes to post. Please edit some RFC values first.");
+        //   return;
+        // }
 
         const dawlanceRFCPost = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc?${queryParams}`;
 

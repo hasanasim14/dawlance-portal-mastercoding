@@ -31,6 +31,7 @@ export default function DawlanceRFC() {
   const [currentYear, setCurrentYear] = useState<string>("");
   const [permission, setPermission] = useState<PermissionConfig | null>(null);
   const [summaryData, setSummaryData] = useState([]);
+  const [isAutoSaving, setIsAutoSaving] = useState(0);
 
   // which columns to have the filter on
   const filterableColumns = ["Product"];
@@ -203,7 +204,7 @@ export default function DawlanceRFC() {
 
           // Generate columns based on actual response data
           const generatedColumns = generateColumnsFromData(transformedData);
-         console.log("generatedColumns",generatedColumns)
+          console.log("generatedColumns", generatedColumns);
           setColumns(generatedColumns);
           setEditedValues({});
         } else {
@@ -221,7 +222,7 @@ export default function DawlanceRFC() {
         setLoading(false);
       }
     },
-    [applyFiltersToData, columnFilters]
+    [applyFiltersToData, columnFilters, isAutoSaving]
   );
 
   // Apply filters when columnFilters change
@@ -474,6 +475,10 @@ export default function DawlanceRFC() {
     [currentBranch, currentMonth, currentYear]
   );
 
+  const handleOnSaveTrigger = () => {
+    setIsAutoSaving((prev) => prev + 1);
+  };
+
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 md:gap-6">
@@ -499,6 +504,7 @@ export default function DawlanceRFC() {
           summaryData={summaryData}
           option={"dawlance"}
           warningMessage={warningMessage}
+          autoSaveCheck={handleOnSaveTrigger}
         />
       </div>
     </div>

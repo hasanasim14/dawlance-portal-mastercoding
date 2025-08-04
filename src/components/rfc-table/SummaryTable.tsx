@@ -14,6 +14,7 @@ interface SummaryDataProps {
   month: string;
   year: string;
   option: string;
+  autoSaveCheck?: () => void;
 }
 
 const SummaryTable = ({
@@ -21,6 +22,7 @@ const SummaryTable = ({
   summaryData,
   month,
   year,
+  autoSaveCheck,
 }: SummaryDataProps) => {
   const headers = summaryData.length > 0 ? Object.keys(summaryData[0]) : [];
   const stringMonth = getFullMonthName(month);
@@ -45,6 +47,7 @@ const SummaryTable = ({
 
       if (!res.ok) throw new Error("Failed to auto-save");
       console.log(`Auto-saved for ${product}: ${rfc}`);
+      autoSaveCheck?.();
     } catch (error) {
       console.error("Auto-save error:", error);
     }

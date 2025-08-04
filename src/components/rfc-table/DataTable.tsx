@@ -56,6 +56,7 @@ interface DataTableProps {
   summaryData: any[];
   option: string;
   warningMessage: string;
+  autoSaveCheck?: () => void;
 }
 
 // material object interface
@@ -86,6 +87,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
   summaryData,
   option,
   warningMessage,
+  autoSaveCheck,
 }) => {
   // State for tracking which rows have been modified
   const [modifiedRows, setModifiedRows] = useState<Set<string>>(new Set());
@@ -130,33 +132,20 @@ export const RFCTable: React.FC<DataTableProps> = ({
     return `${row["Material"] || ""}_${row["Branch"] || ""}`;
   };
 
-  // Get all RFC columns (excluding "Last RFC")
+  // Get all RFC columns (excluding "Last RFC") - UPDATED to match table rendering logic
   const getRFCColumns = useCallback(() => {
     return columnsRef.current.filter((col) => {
       const key = col.key;
-      // Match if RFC appears at end OR has a trailing space after RFC
+      // Use the same logic as table rendering for consistency
       const isRFC =
         key.includes("RFC") &&
-        (key.trimEnd().endsWith("RFC") || key.endsWith("RFC ")) &&
+        key.endsWith(" RFC") && // Only match columns ending with " RFC" (with space)
         !key.includes("Branch") &&
         !key.includes("Marketing") &&
         !key.includes("Last");
       return isRFC;
     });
   }, []);
-
-  // Helper function to safely convert value to number or preserve null/empty
-  const convertToNumberOrNull = (value: string | null | undefined) => {
-    if (value === null || value === undefined) {
-      return "";
-    }
-    if (value === "") {
-      return ""; // preserve empty string intentionally set by user
-    }
-
-    const numValue = Number(value);
-    return isNaN(numValue) ? "" : numValue;
-  };
 
   // Check if all RFC values are filled for all rows
   const checkAllRFCValuesFilled = useCallback(() => {
@@ -209,70 +198,221 @@ export const RFCTable: React.FC<DataTableProps> = ({
   // Update modified rows whenever editedValues or originalRowData changes
   useEffect(() => {
     checkAllRFCValuesFilled();
-  }, [editedValues, originalRowData]);
+  }, [editedValues, originalRowData, checkAllRFCValuesFilled]);
 
-  // Prepare changed data for API call - collects all RFC values for modified rows
-  const prepareChangedData = useCallback(() => {
+  // UPDATED: Prepare changed data for autosave - follows your specific requirements
+  const prepareAutoSaveData = useCallback(() => {
     // eslint-disable-next-line
     const changedData: Array<{ material: string; [key: string]: any }> = [];
-
-    // Get all RFC columns
     const allRFCColumns = getRFCColumns();
 
+    // For autosave, check all rows that have any RFC modifications
+    originalRowDataRef.current.forEach((originalRow) => {
+      const rowKey = getRowKey(originalRow);
+      const rowEdits = editedValuesRef.current[rowKey] || {};
+
+      const material = String(originalRow["Material"] || "");
+      if (!material) return;
+
+      if (option === "dawlance") {
+        // For Dawlance: Check if rfc-0 (latest month) has value
+        const rfc0Column = allRFCColumns[0]; // Latest month is first column
+        const rfc0EditedValue = rowEdits[rfc0Column?.key];
+        const rfc0OriginalValue = String(originalRow[rfc0Column?.key] || "");
+        const rfc0FinalValue =
+          rfc0EditedValue !== undefined ? rfc0EditedValue : rfc0OriginalValue;
+
+        // If rfc-0 is empty, don't send anything for this row
+        if (
+          !rfc0FinalValue ||
+          rfc0FinalValue === "" ||
+          rfc0FinalValue === "0"
+        ) {
+          return;
+        }
+
+        // If rfc-0 has value, prepare the record
+        // eslint-disable-next-line
+        const record: { material: string; [key: string]: any } = { material };
+
+        // Add all RFC values (rfc-0, rfc-1, rfc-2, rfc-3)
+        allRFCColumns.forEach((rfcColumn, index) => {
+          // const editedValue = rowEdits[rfcColumn.key];
+          // const originalValue = String(originalRow[rfcColumn.key] || "");
+          // const finalValue =
+          //   editedValue !== undefined ? editedValue : originalValue;
+          const editedValue = rowEdits[rfcColumn.key];
+          const originalValue = originalRow[rfcColumn.key];
+          const finalValueRaw =
+            editedValue !== undefined ? editedValue : originalValue;
+          const finalValue =
+            finalValueRaw === "" || finalValueRaw == null
+              ? 0
+              : Number(finalValueRaw);
+
+          // For rfc-0, use the actual value
+          // For previous RFC values (rfc-1, rfc-2, rfc-3), if empty send as 0, otherwise send the value
+          if (index === 0) {
+            record[`rfc-${index}`] = Number(finalValue);
+          } else {
+            record[`rfc-${index}`] =
+              // finalValue === "" ||
+              finalValue === null || finalValue === undefined
+                ? 0
+                : Number(finalValue);
+          }
+        });
+
+        changedData.push(record);
+      } else {
+        // For non-Dawlance: Single RFC field
+        // Only send if there are actual edits and RFC has a non-empty value
+        if (Object.keys(rowEdits).length === 0) return;
+
+        let totalRfc = 0;
+        let hasValidRfc = false;
+
+        allRFCColumns.forEach((rfcColumn) => {
+          const editedValue = rowEdits[rfcColumn.key];
+          const originalValue = String(originalRow[rfcColumn.key] || "");
+          const finalValue =
+            editedValue !== undefined ? editedValue : originalValue;
+
+          if (
+            finalValue !== "" &&
+            finalValue !== "0" &&
+            finalValue !== null &&
+            finalValue !== undefined
+          ) {
+            totalRfc += Number(finalValue);
+            hasValidRfc = true;
+          }
+        });
+
+        // Only add if there's a valid RFC value
+        if (hasValidRfc && totalRfc > 0) {
+          changedData.push({
+            material,
+            rfc: totalRfc,
+          });
+        }
+      }
+    });
+
+    return changedData;
+  }, [getRFCColumns, option]);
+
+  // UPDATED: Prepare changed data for save - follows your specific requirements
+  const prepareSaveData = useCallback(() => {
+    // eslint-disable-next-line
+    const changedData: Array<{ material: string; [key: string]: any }> = [];
+    const allRFCColumns = getRFCColumns();
+
+    // Only process rows that have been actually edited
     Object.entries(editedValuesRef.current).forEach(([rowKey, rowEdits]) => {
       // Find the original row data
       const originalRow = originalRowDataRef.current.find(
         (row) => getRowKey(row) === rowKey
       );
-
       if (!originalRow) return;
 
       const material = String(originalRow["Material"] || "");
       if (!material) return;
 
-      // Prepare row data with material
-      // eslint-disable-next-line
-      const rowData: { material: string; [key: string]: any } = { material };
-
-      // Collect all RFC values for this row (both edited and original)
-      allRFCColumns.forEach((rfcColumn, index) => {
-        const editedValue = rowEdits[rfcColumn.key];
-        const originalValue = String(originalRow[rfcColumn.key] || "");
-
-        // Use edited value if available, otherwise use original value
-        const finalValue =
-          editedValue !== undefined ? editedValue : originalValue;
-
-        if (option === "dawlance") {
-          const reversedIndex = allRFCColumns.length - 1 - index;
-          const fieldName = `rfc-${reversedIndex}`;
-          // Use the helper function to properly handle null/empty values
-          rowData[fieldName] = convertToNumberOrNull(finalValue);
-        } else {
-          if (rowData.rfc === undefined) {
-            // Use the helper function to properly handle null/empty values
-            rowData.rfc = convertToNumberOrNull(finalValue);
-          }
-        }
+      // Check if this row has actual changes
+      const hasChanges = Object.keys(rowEdits).some((key) => {
+        const editedValue = rowEdits[key];
+        const originalValue = String(originalRow[key] || "");
+        return editedValue !== undefined && editedValue !== originalValue;
       });
 
-      // Only add if there are actual changes in this row
-      const hasChanges = Object.keys(rowEdits).length > 0;
-      if (hasChanges) changedData.push(rowData);
+      if (!hasChanges) return;
+
+      if (option === "dawlance") {
+        // For Dawlance: Check if rfc-0 (latest month) has value
+        const rfc0Column = allRFCColumns[0]; // Latest month is first column
+        const rfc0EditedValue = rowEdits[rfc0Column?.key];
+        const rfc0OriginalValue = String(originalRow[rfc0Column?.key] || "");
+        const rfc0FinalValue =
+          rfc0EditedValue !== undefined ? rfc0EditedValue : rfc0OriginalValue;
+
+        // If rfc-0 is empty, don't send anything for this row
+        if (
+          !rfc0FinalValue ||
+          rfc0FinalValue === "" ||
+          rfc0FinalValue === "0"
+        ) {
+          return;
+        }
+
+        // If rfc-0 has value, prepare the record
+        // eslint-disable-next-line
+        const record: { material: string; [key: string]: any } = { material };
+
+        // Add all RFC values (rfc-0, rfc-1, rfc-2, rfc-3)
+        allRFCColumns.forEach((rfcColumn, index) => {
+          const editedValue = rowEdits[rfcColumn.key];
+          const originalValue = String(originalRow[rfcColumn.key] || "");
+
+          // For rfc-0, use the actual value
+          // For previous RFC values (rfc-1, rfc-2, rfc-3), if empty send as 0, otherwise send the value
+          const finalValueRaw =
+            editedValue !== undefined
+              ? editedValue
+              : originalRow[rfcColumn.key];
+          const finalValue =
+            finalValueRaw === "" || finalValueRaw == null
+              ? 0
+              : Number(finalValueRaw);
+          record[`rfc-${index}`] = finalValue;
+        });
+
+        changedData.push(record);
+      } else {
+        // For non-Dawlance: Single RFC field
+        // Omit all columns whose RFC is empty string
+        let totalRfc = 0;
+        let hasValidRfc = false;
+
+        allRFCColumns.forEach((rfcColumn) => {
+          const editedValue = rowEdits[rfcColumn.key];
+          const originalValue = String(originalRow[rfcColumn.key] || "");
+          const finalValue =
+            editedValue !== undefined ? editedValue : originalValue;
+
+          if (
+            finalValue !== "" &&
+            finalValue !== "0" &&
+            finalValue !== null &&
+            finalValue !== undefined
+          ) {
+            totalRfc += Number(finalValue);
+            hasValidRfc = true;
+          }
+        });
+
+        // Only add if there's a valid RFC value (omit empty ones)
+        if (hasValidRfc && totalRfc > 0) {
+          changedData.push({
+            material,
+            rfc: totalRfc,
+          });
+        }
+      }
     });
 
     return changedData;
-  }, [getRFCColumns]);
+  }, [getRFCColumns, option]);
 
   // Create debounced autosave function
   const debouncedAutoSave = useCallback(
     debounce(() => {
-      const changedData = prepareChangedData();
+      const changedData = prepareAutoSaveData();
       if (changedData.length > 0 && onAutoSave) {
         onAutoSave(changedData);
       }
     }, 3000),
-    [prepareChangedData, onAutoSave]
+    [prepareAutoSaveData, onAutoSave]
   );
 
   // Cleanup debounce on unmount
@@ -325,10 +465,8 @@ export const RFCTable: React.FC<DataTableProps> = ({
     const rowKey = getRowKey(row);
     const rowEdits = editedValues[rowKey];
     const editedValue = rowEdits?.[columnKey];
-
     const finalValue =
       editedValue !== undefined ? editedValue : String(originalValue ?? "");
-
     return finalValue;
   };
 
@@ -366,6 +504,10 @@ export const RFCTable: React.FC<DataTableProps> = ({
     }
   }, [originalRowData]);
 
+  const handleAutoSaveSignal = () => {
+    autoSaveCheck?.();
+  };
+
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
       <RFCTableHeaders
@@ -373,7 +515,11 @@ export const RFCTable: React.FC<DataTableProps> = ({
         permission={permission}
         branchFilter={branchFilter}
         onPost={onPost}
-        onSave={onSave}
+        onSave={(branch, month, year, _) => {
+          // Use the updated save data preparation
+          const saveData = prepareSaveData();
+          return onSave(branch, month, year, saveData);
+        }}
         onFetchData={onFetchData}
         isSaving={isSaving}
         isPosting={isPosting}
@@ -390,6 +536,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
         onDateChange={(month: string, year: string) =>
           setDates({ month, year })
         }
+        onAutoSave={handleAutoSaveSignal}
       />
 
       <div className="flex-1 overflow-hidden rounded-lg border bg-card shadow-sm m-2 p-2">
@@ -400,7 +547,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
                 {columns.map((column) => {
                   const isFilterable = filterableColumns.includes(column.key);
                   const hasActiveFilter = columnFilters[column.key]?.length > 0;
-
                   return (
                     <TableHead
                       key={column.key}
@@ -439,7 +585,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
                 })}
               </TableRow>
             </TableHeader>
-
             <TableBody>
               {isLoading ? (
                 <TableRow>
@@ -487,6 +632,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
                     }`}
                   >
                     {columns.map((column) => {
+                      // UPDATED: Use consistent RFC column detection logic
                       const isRFCColumn =
                         column.key.includes("RFC") &&
                         column.key.endsWith(" RFC") &&
@@ -554,7 +700,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
             </TableBody>
           </Table>
         </div>
-
         <AnnualRFCModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}

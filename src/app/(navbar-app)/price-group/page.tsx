@@ -15,24 +15,25 @@ import {
   extractFields,
 } from "@/lib/data-transformers";
 import { cn } from "@/lib/utils";
-import SearchComponent from "@/components/SearchComponent";
 import { RightSheet } from "@/components/right-sheet/RightSheet";
+import SearchComponent from "@/components/SearchComponent";
+import { toast } from "sonner";
 
 export default function PriceGroup() {
   const [selectedRow, setSelectedRow] = useState<RowDataType | null>(null);
-  const [selectedRowId, setSelectedRowId] = useState<string | number | null>(
-    null
-  );
   const [selectedRows, setSelectedRows] = useState<RowDataType[]>([]);
   const [rowData, setRowData] = useState<RowDataType[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
-    null
-  );
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [selectedRowId, setSelectedRowId] = useState<string | number | null>(
+    null
+  );
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
   // Pagination states
   const [pagination, setPagination] = useState<PaginationData>({
@@ -72,6 +73,7 @@ export default function PriceGroup() {
     { key: "Max Price", label: "Max Price" },
   ];
 
+  // fetch prices data
   const fetchPricesData = async (
     searchParams: Record<string, string> = {},
     page = 1,
@@ -82,10 +84,8 @@ export default function PriceGroup() {
       let endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/pricegroups`;
 
       const queryParams = new URLSearchParams();
-
       queryParams.append("page", page.toString());
       queryParams.append("limit", recordsPerPage.toString());
-
       const hasSearchParams = Object.keys(searchParams).length > 0;
 
       if (hasSearchParams) {
@@ -242,6 +242,7 @@ export default function PriceGroup() {
     } catch (error) {
       console.error("Error deleting records:", error);
     } finally {
+      toast.success("Records deleted successfully");
       setDeleting(false);
       setShowDeleteDialog(false);
     }
@@ -357,6 +358,12 @@ export default function PriceGroup() {
           row["Price Group"] === data["Price Group"] ? { ...row, ...data } : row
         )
       );
+
+      if (method === "POST") {
+        toast.success("Master ID created successfully");
+      } else {
+        toast.success("Master ID updated successfully");
+      }
 
       // Update selected row data
       setSelectedRow(data as RowDataType);

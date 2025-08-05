@@ -31,7 +31,6 @@ export type RowDataType = {
 
 export type SortConfig = {
   key: keyof RowDataType;
-  // direction: "asc" | "desc";
 } | null;
 
 export type FilterConfig = {
@@ -75,7 +74,6 @@ interface SelectOption {
 export type ColumnConfig = {
   key: string;
   label: string;
-  editable?: boolean;
 };
 
 export type PermissionConfig = {

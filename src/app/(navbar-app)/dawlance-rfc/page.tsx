@@ -34,6 +34,13 @@ export default function DawlanceRFC() {
   // which columns to have the filter on
   const filterableColumns = ["Product"];
 
+  // refresh the page when auto-save
+  useEffect(() => {
+    if (currentBranch && currentMonth && currentYear) {
+      fetchDawlanceRFCData(currentBranch, currentMonth, currentYear);
+    }
+  }, [isAutoSaving]);
+
   // Generate columns from API response data
   const generateColumnsFromData = (
     data: RowDataType[]
@@ -122,8 +129,7 @@ export default function DawlanceRFC() {
       setCurrentBranch(branch);
       setCurrentMonth(month);
       setCurrentYear(year);
-
-      console.log("the data is being fetchd");
+      setSummaryData([]);
 
       try {
         const queryParams = new URLSearchParams({
@@ -384,6 +390,10 @@ export default function DawlanceRFC() {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        if (response.ok) {
+          setIsAutoSaving((prev) => prev + 1);
+        }
       } catch (error) {
         console.error("Error auto-saving RFC data:", error);
       }
@@ -392,7 +402,6 @@ export default function DawlanceRFC() {
   );
 
   const handleOnSaveTrigger = () => {
-    console.log("come on, come one");
     setIsAutoSaving((prev) => prev + 1);
   };
 

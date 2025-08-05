@@ -17,6 +17,7 @@ import { DataTable } from "@/components/data-table/DataTable";
 import { cn } from "@/lib/utils";
 import { RightSheet } from "@/components/right-sheet/RightSheet";
 import SearchComponent from "@/components/SearchComponent";
+import { toast } from "sonner";
 
 export default function PhaseIO() {
   const [selectedRow, setSelectedRow] = useState<RowDataType | null>(null);
@@ -115,10 +116,8 @@ export default function PhaseIO() {
       let endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/phaseinout`;
 
       const queryParams = new URLSearchParams();
-
       queryParams.append("page", page.toString());
       queryParams.append("limit", recordsPerPage.toString());
-
       const hasSearchParams = Object.keys(searchParams).length > 0;
 
       if (hasSearchParams) {
@@ -142,9 +141,7 @@ export default function PhaseIO() {
 
       const parsedData = typeof data === "string" ? JSON.parse(data) : data;
 
-      // Fix: Access the data array from the response
       if (parsedData && parsedData.data && Array.isArray(parsedData.data)) {
-        // Transform the received data from API format to display format
         const transformedData = transformArrayFromApiFormat(
           parsedData.data
         ) as RowDataType[];
@@ -281,6 +278,7 @@ export default function PhaseIO() {
     } catch (error) {
       console.error("Error deleting records:", error);
     } finally {
+      toast.success("Records deleted successfully");
       setDeleting(false);
       setShowDeleteDialog(false);
     }
@@ -398,6 +396,12 @@ export default function PhaseIO() {
           row["Product"] === data["Product"] ? { ...row, ...data } : row
         )
       );
+
+      if (method === "POST") {
+        toast.success("Master ID created successfully");
+      } else {
+        toast.success("Master ID updated successfully");
+      }
 
       // Update selected row data
       setSelectedRow(data as RowDataType);

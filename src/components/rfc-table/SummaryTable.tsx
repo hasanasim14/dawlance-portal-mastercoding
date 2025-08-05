@@ -6,6 +6,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "../ui/input";
+import { PermissionConfig } from "@/lib/types";
 import { getFullMonthName } from "@/lib/utils";
 
 interface SummaryDataProps {
@@ -15,6 +17,7 @@ interface SummaryDataProps {
   year: string;
   option: string;
   autoSaveCheck?: () => void;
+  permission: PermissionConfig | null;
 }
 
 const SummaryTable = ({
@@ -23,6 +26,7 @@ const SummaryTable = ({
   month,
   year,
   autoSaveCheck,
+  permission,
 }: SummaryDataProps) => {
   const headers = summaryData.length > 0 ? Object.keys(summaryData[0]) : [];
   const stringMonth = getFullMonthName(month);
@@ -82,10 +86,11 @@ const SummaryTable = ({
                   return (
                     <TableCell key={key}>
                       {shouldShowInput ? (
-                        <input
+                        <Input
                           type="number"
                           className="w-full border rounded px-2 py-1 text-sm"
                           defaultValue={item[key]}
+                          disabled={permission?.save_allowed === 0}
                           onBlur={(e) => {
                             const value = parseFloat(e.target.value);
                             if (!isNaN(value)) {

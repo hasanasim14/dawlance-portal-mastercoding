@@ -17,6 +17,7 @@ import { DataTable } from "@/components/data-table/DataTable";
 import { cn } from "@/lib/utils";
 import { RightSheet } from "@/components/right-sheet/RightSheet";
 import SearchComponent from "@/components/SearchComponent";
+import { toast } from "sonner";
 
 export default function MasterCoding() {
   const [selectedRow, setSelectedRow] = useState<RowDataType | null>(null);
@@ -149,7 +150,7 @@ export default function MasterCoding() {
     (col) => !columnsToOmit.includes(col.key)
   );
 
-
+  // fetch master coding data
   const fetchMasterData = async (
     searchParams: Record<string, string> = {},
     page = 1,
@@ -160,7 +161,6 @@ export default function MasterCoding() {
       let endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/mastercoding`;
 
       const queryParams = new URLSearchParams();
-
       queryParams.append("page", page.toString());
       queryParams.append("limit", recordsPerPage.toString());
 
@@ -183,8 +183,8 @@ export default function MasterCoding() {
           Authorization: `Bearer ${authToken}`,
         },
       });
-      const data = await res.json();
 
+      const data = await res.json();
       const parsedData = typeof data === "string" ? JSON.parse(data) : data;
 
       if (parsedData && parsedData.data && Array.isArray(parsedData.data)) {
@@ -323,6 +323,7 @@ export default function MasterCoding() {
     } catch (error) {
       console.error("Error deleting records:", error);
     } finally {
+      toast.success("Records deleted successfully");
       setDeleting(false);
       setShowDeleteDialog(false);
     }
@@ -432,6 +433,12 @@ export default function MasterCoding() {
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      if (method === "POST") {
+        toast.success("Master ID created successfully");
+      } else {
+        toast.success("Master ID updated successfully");
       }
 
       setRowData((prevData) =>

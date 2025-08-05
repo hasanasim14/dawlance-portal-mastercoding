@@ -118,8 +118,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
     setModalOpen(true);
   };
 
-  console.log("the branc ==>", branch);
-
   // Refs to track the latest values
   const editedValuesRef = useRef(editedValues);
   const originalRowDataRef = useRef(originalRowData);
@@ -389,8 +387,8 @@ export const RFCTable: React.FC<DataTableProps> = ({
       />
 
       <div className="flex-1 overflow-hidden rounded-lg border bg-card shadow-sm m-2 p-2">
-        <div className="h-full w-full overflow-auto">
-          <Table className="relative w-full">
+        <div className="w-full h-[50vh] overflow-auto">
+          <Table className="relative w-full h-[50vh]">
             <TableHeader className="sticky top-0 z-50 bg-muted">
               <TableRow className="hover:bg-transparent border-b shadow-sm">
                 {columns.map((column) => {
@@ -408,6 +406,10 @@ export const RFCTable: React.FC<DataTableProps> = ({
   ${
     column.key === "Material Description" &&
     "sticky left-[120px] z-20 w-[240px] min-w-[240px] max-w-[240px]"
+  }
+  ${
+    column.key === "Product" &&
+    "sticky left-[360px] z-10 w-[150px] min-w-[150px] max-w-[150px]"
   }
 `}
                     >
@@ -477,7 +479,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
                         return;
                       }
 
-                      // handleMaterialClick(String(row["Material"] ?? ""));
                       handleMaterialClick(
                         String(row["Material"] ?? ""),
                         String(row["Material Description"] ?? "")
@@ -514,6 +515,10 @@ export const RFCTable: React.FC<DataTableProps> = ({
     column.key === "Material Description" &&
     "sticky left-[120px] z-20 bg-background w-[240px] min-w-[240px] max-w-[240px]"
   }
+    ${
+      column.key === "Product" &&
+      "sticky left-[360px] z-10 bg-background w-[150px] min-w-[150px] max-w-[150px]"
+    }
 `}
                           title={String(row[column.key] ?? "")}
                         >
@@ -522,6 +527,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
                               <Input
                                 type="number"
                                 value={cellValue}
+                                // disabled={permission?.save_allowed === 0}
                                 onChange={(e) =>
                                   handleCellChange(
                                     row,
@@ -535,7 +541,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
                                     handleCellBlur();
                                   }
                                 }}
-                                // disabled={permission == 0}
                                 className="w-full h-7 sm:h-8 text-xs sm:text-sm"
                                 placeholder=""
                               />

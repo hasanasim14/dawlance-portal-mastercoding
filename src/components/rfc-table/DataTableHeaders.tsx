@@ -440,6 +440,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
           year={selectedYear}
           summaryData={summaryData}
           autoSaveCheck={handleAutoSaveSignal}
+          permission={permission}
         />
       </div>
     </div>

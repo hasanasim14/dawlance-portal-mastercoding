@@ -14,6 +14,8 @@ export const getNextMonthAndYear = (type: string) => {
   let nextMonth;
   if (type === "RFC" || type === "offering") {
     nextMonth = currentMonth + 4;
+  } else if (type === "uploads") {
+    nextMonth = currentMonth - 1;
   } else {
     nextMonth = currentMonth + 1;
   }

@@ -107,15 +107,11 @@ function UploadCenter() {
   const [showTable, setShowTable] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
   const [currentTableType, setCurrentTableType] = useState<string>("");
-  // const [responseObject, setResponseObject] = useState({
-  //   allow_upload: "",
-  //   check_statement: "",
-  // });
   const [allowUpload, setAllowUpload] = useState(false);
   const [checkStatement, setCheckStatement] = useState("");
   // Set default values on component mount
   useEffect(() => {
-    const { month, year } = getNextMonthAndYear("Non-RFC");
+    const { month, year } = getNextMonthAndYear("uploads");
     setSelectedMonth(month);
     setSelectedYear(year);
   }, []);

@@ -24,9 +24,6 @@ export default function DawlanceRFC() {
   const [editedValues, setEditedValues] = useState<
     Record<string, Record<string, string>>
   >({});
-  // Autosave state
-  // eslint-disable-next-line
-  const [autoSaving, setAutoSaving] = useState(false);
   const [currentBranch, setCurrentBranch] = useState<string>("");
   const [currentMonth, setCurrentMonth] = useState<string>("");
   const [currentYear, setCurrentYear] = useState<string>("");
@@ -126,9 +123,10 @@ export default function DawlanceRFC() {
       setCurrentMonth(month);
       setCurrentYear(year);
 
+      console.log("the data is being fetchd");
+
       try {
         const queryParams = new URLSearchParams({
-          // branch,
           month,
           year,
         });
@@ -143,7 +141,6 @@ export default function DawlanceRFC() {
           process.env.NEXT_PUBLIC_BASE_URL
         }/dawlance-rfc-product?${queryParams.toString()}`;
 
-        // queryParams.delete("branch");
         queryParams.append("branch", "Dawlance");
 
         // get permission data
@@ -210,12 +207,14 @@ export default function DawlanceRFC() {
           console.error("Invalid data structure received:", parsedData);
           setOriginalRowData([]);
           setFilteredRowData([]);
+          setSummaryData([]);
           setColumns([]);
         }
       } catch (error) {
         console.error("Error fetching branch rfc data", error);
         setOriginalRowData([]);
         setFilteredRowData([]);
+        setSummaryData([]);
         setColumns([]);
       } finally {
         setLoading(false);
@@ -364,7 +363,6 @@ export default function DawlanceRFC() {
         return;
       }
 
-      setAutoSaving(true);
       try {
         const queryParams = new URLSearchParams({
           month: currentMonth,
@@ -386,20 +384,15 @@ export default function DawlanceRFC() {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        // Don't refresh data on autosave to avoid disrupting user input
-        // await fetchDawlanceRFCData(currentBranch, currentMonth, currentYear);
       } catch (error) {
         console.error("Error auto-saving RFC data:", error);
-        // toast.error("Auto-save failed");
-      } finally {
-        setAutoSaving(false);
       }
     },
     [currentBranch, currentMonth, currentYear]
   );
 
   const handleOnSaveTrigger = () => {
+    console.log("come on, come one");
     setIsAutoSaving((prev) => prev + 1);
   };
 

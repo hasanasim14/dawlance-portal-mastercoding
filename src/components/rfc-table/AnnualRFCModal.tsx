@@ -46,7 +46,10 @@ const AnnualRFCModal = ({
       queryParams.append("option", option);
       queryParams.append("material", materialData?.material_id || "");
 
+      console.log("the branch", branch);
+
       if (option === "branch" && branch) {
+        console.log("everybody say", branch);
         queryParams.append("branch", branch);
       }
 

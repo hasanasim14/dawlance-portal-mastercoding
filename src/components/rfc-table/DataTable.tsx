@@ -118,6 +118,8 @@ export const RFCTable: React.FC<DataTableProps> = ({
     setModalOpen(true);
   };
 
+  console.log("the branc ==>", branch);
+
   // Refs to track the latest values
   const editedValuesRef = useRef(editedValues);
   const originalRowDataRef = useRef(originalRowData);
@@ -316,16 +318,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
 
   const rfcColumns = getRFCColumns();
 
-  useEffect(() => {
-    if (originalRowData.length > 0) {
-      setBranch(originalRowData[0]["Branch"]);
-    } else {
-      setBranch("");
-    }
-  }, [originalRowData]);
-
-  //debugging
-
   const getEditableRFCColumns = () => {
     return rfcColumns.filter((col) => {
       const key = col.key;
@@ -373,6 +365,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
         option={option}
         permission={permission}
         branchFilter={branchFilter}
+        setBranch={setBranch}
         onPost={onPost}
         onSave={onSave}
         onFetchData={onFetchData}

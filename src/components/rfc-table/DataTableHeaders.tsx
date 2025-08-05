@@ -27,6 +27,7 @@ interface HeadersProps {
   option: string;
   permission: PermissionConfig | null;
   branchFilter: boolean;
+  setBranch: React.Dispatch<React.SetStateAction<string>>;
   onPost: (
     branch: string,
     month: string,
@@ -68,6 +69,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
   option,
   permission,
   branchFilter,
+  setBranch,
   onPost,
   onSave,
   onFetchData,
@@ -96,6 +98,12 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
     null
   );
 
+  useEffect(() => {
+    if (selectedBranch) {
+      setBranch(selectedBranch);
+    }
+  }, [selectedBranch]);
+
   // Set default values on component mount
   useEffect(() => {
     const { month, year } = getNextMonthAndYear("RFC");
@@ -104,6 +112,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
     onDateChange?.(selectedMonth, selectedYear);
     if (!branchFilter && branches.length > 0) {
       setSelectedBranch(branches[0].salesOffice);
+      setBranch(branches[0].salesOffice);
     }
   }, [branchFilter, branches]);
 
@@ -147,6 +156,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
 
         if (!branchFilter && branchOptions.length > 0) {
           setSelectedBranch(branchOptions[0].salesOffice);
+          setBranch(branchOptions[0].salesOffice);
         }
       } catch (error) {
         console.error("Error fetching branches:", error);

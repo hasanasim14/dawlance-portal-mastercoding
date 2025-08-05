@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import type { RowDataType, ColumnConfig, PermissionConfig } from "@/lib/types";
 import { transformArrayFromApiFormat } from "@/lib/data-transformers";
 import { RFCTable } from "@/components/rfc-table/DataTable";
+import { toast } from "sonner";
 
 export default function DawlanceRFC() {
   // Original data from API (unfiltered)
@@ -198,13 +199,11 @@ export default function DawlanceRFC() {
           ) as RowDataType[];
 
           setOriginalRowData(transformedData);
-          console.log("transformedData", transformedData);
           const filtered = applyFiltersToData(transformedData, columnFilters);
           setFilteredRowData(filtered);
 
           // Generate columns based on actual response data
           const generatedColumns = generateColumnsFromData(transformedData);
-          console.log("generatedColumns", generatedColumns);
           setColumns(generatedColumns);
           setEditedValues({});
         } else {
@@ -258,88 +257,12 @@ export default function DawlanceRFC() {
       data: RowDataType[]
     ) => {
       setPosting(true);
+
       try {
         const queryParams = new URLSearchParams({
           month,
           year,
         }).toString();
-
-        // Find all RFC columns that are month-year RFC format
-        const rfcColumns = columns.filter((col) => {
-          const key = col.key;
-          return (
-            key.includes("RFC") &&
-            key.endsWith(" RFC") &&
-            !key.includes("Branch") &&
-            !key.includes("Marketing") &&
-            !key.includes("Last")
-          );
-        });
-
-        if (rfcColumns.length === 0) {
-          throw new Error("RFC columns not found");
-        }
-
-        // Helper function to get row key (same as in DataTable)
-        const getRowKey = (row: RowDataType): string => {
-          return `${row["Material"] || ""}_${row["Branch"] || ""}`;
-        };
-
-        // Only include rows that have been modified and have valid RFC changes
-        // eslint-disable-next-line
-        const postData: Array<{ material: string; [key: string]: any }> = [];
-
-        data.forEach((row) => {
-          const rowKey = getRowKey(row);
-          const rowEdits = editedValues[rowKey];
-
-          // Only process rows that have been edited
-          if (rowEdits) {
-            // eslint-disable-next-line
-            const record: { material: string; [key: string]: any } = {
-              material: String(row["Material"] || ""),
-            };
-
-            let hasValidChanges = false;
-
-            // Handle single RFC vs multiple RFCs - only include changed values
-            if (rfcColumns.length === 1) {
-              const rfcValue = rowEdits[rfcColumns[0].key];
-              if (
-                rfcValue !== undefined &&
-                rfcValue !== "" &&
-                rfcValue !== null
-              ) {
-                record.rfc = Number(rfcValue) || 0;
-                hasValidChanges = true;
-              }
-            } else {
-              // Multiple RFCs - only include the ones that were actually changed
-              rfcColumns.forEach((rfcColumn, index) => {
-                const rfcValue = rowEdits[rfcColumn.key];
-                if (
-                  rfcValue !== undefined &&
-                  rfcValue !== "" &&
-                  rfcValue !== null
-                ) {
-                  record[`rfc${index}`] = Number(rfcValue) || 0;
-                  hasValidChanges = true;
-                }
-              });
-            }
-
-            // Only add the record if it has valid changes
-            if (hasValidChanges) {
-              postData.push(record);
-            }
-          }
-        });
-
-        // If no changes to post, show message
-        // if (postData.length === 0) {
-        //   alert("No changes to post. Please edit some RFC values first.");
-        //   return;
-        // }
 
         const dawlanceRFCPost = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc?${queryParams}`;
 
@@ -352,14 +275,14 @@ export default function DawlanceRFC() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(postData),
+            body: JSON.stringify(data),
           }),
           fetch(dawlanceRFCSave, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(postData),
+            body: JSON.stringify(data),
           }),
         ]);
 
@@ -380,6 +303,7 @@ export default function DawlanceRFC() {
         console.error("Error posting RFC data:", error);
       } finally {
         setPosting(false);
+        toast.success("Values Posted Successfully");
       }
     },
     [fetchDawlanceRFCData, columns, editedValues]

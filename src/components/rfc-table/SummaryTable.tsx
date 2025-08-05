@@ -46,7 +46,6 @@ const SummaryTable = ({
       );
 
       if (!res.ok) throw new Error("Failed to auto-save");
-      console.log(`Auto-saved for ${product}: ${rfc}`);
       autoSaveCheck?.();
     } catch (error) {
       console.error("Auto-save error:", error);

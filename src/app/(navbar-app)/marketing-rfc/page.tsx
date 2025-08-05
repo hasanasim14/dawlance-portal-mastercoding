@@ -22,7 +22,7 @@ export default function MarketingRFC() {
   >({});
   const [permission, setPermission] = useState<PermissionConfig | null>(null);
   const [summaryData, setSummaryData] = useState([]);
-  const [autoSaving, setAutoSaving] = useState(false);
+  // const [autoSaving, setAutoSaving] = useState(false);
   const [currentBranch, setCurrentBranch] = useState<string>("");
   const [currentMonth, setCurrentMonth] = useState<string>("");
   const [currentYear, setCurrentYear] = useState<string>("");
@@ -223,15 +223,6 @@ export default function MarketingRFC() {
       setPosting(true);
       try {
         const query = new URLSearchParams({ month, year }).toString();
-        const rfcColumn = columns.find(
-          (col) => col.key.includes("RFC") && !col.key.includes("Last")
-        );
-        if (!rfcColumn) throw new Error("RFC column not found");
-
-        const postData = data.map((row) => ({
-          material: String(row["Material"] || ""),
-          rfc: String(row[rfcColumn.key] || ""),
-        }));
 
         const postUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/marketing-rfc?${query}`;
         const saveUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/marketing-rfc-save?${query}`;
@@ -240,12 +231,12 @@ export default function MarketingRFC() {
           fetch(postUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(postData),
+            body: JSON.stringify(data),
           }),
           fetch(saveUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(postData),
+            body: JSON.stringify(data),
           }),
         ]);
 
@@ -260,6 +251,7 @@ export default function MarketingRFC() {
         console.error("Error posting RFC data:", error);
       } finally {
         setPosting(false);
+        toast.success("Data posted successfully");
       }
     },
     [fetchBranchRFCData, columns]
@@ -270,6 +262,7 @@ export default function MarketingRFC() {
       branch: string,
       month: string,
       year: string,
+      // eslint-disable-next-line
       changedData: Array<{ material: string; [key: string]: any }>
     ) => {
       setSaving(true);
@@ -304,6 +297,7 @@ export default function MarketingRFC() {
   );
 
   const handleAutoSave = useCallback(
+    // eslint-disable-next-line
     async (changedData: Array<{ material: string; [key: string]: any }>) => {
       if (
         !currentBranch ||
@@ -312,7 +306,7 @@ export default function MarketingRFC() {
         changedData.length === 0
       )
         return;
-      setAutoSaving(true);
+      // setAutoSaving(true);
       try {
         const query = new URLSearchParams({
           month: currentMonth,
@@ -330,9 +324,10 @@ export default function MarketingRFC() {
           throw new Error(`HTTP error! status: ${response.status}`);
       } catch (error) {
         console.error("Error auto-saving RFC data:", error);
-      } finally {
-        setAutoSaving(false);
       }
+      //  finally {
+      //   setAutoSaving(false);
+      // }
     },
     [currentBranch, currentMonth, currentYear]
   );

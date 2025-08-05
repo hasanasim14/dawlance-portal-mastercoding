@@ -186,12 +186,6 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
     };
   }, []);
 
-  // delete
-  useEffect(() => {
-    const is = validateAllRFCFieldsFilled();
-    console.log("asdad", is);
-  }, []);
-
   // Validate if ALL rows have been edited (at least one RFC field per row)
   const validateAllRowsEdited = () => {
     if (rfcColumns.length === 0 || originalRowData.length === 0) return false;
@@ -217,23 +211,11 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
     });
   };
 
-  // validation for post button
-  const validateAllRFCFieldsFilled = () => {
-    if (rfcColumns.length === 0 || originalRowData.length === 0) return false;
-
-    // Check if every row has all RFC fields filled
-    return originalRowData.every((row) => {
-      return rfcColumns.every((rfcColumn) => {
-        const value = getCellValue(row, rfcColumn.key, row[rfcColumn.key]);
-        return value !== "" && value !== null && !isNaN(Number(value));
-      });
-    });
-  };
-
   // Get changed records for SAVE - include ALL RFC fields for modified rows
   const getChangedRecords = () => {
     if (rfcColumns.length === 0) return [];
 
+    // eslint-disable-next-line
     const changedRecords: Array<{ material: string; [key: string]: any }> = [];
 
     modifiedRows.forEach((rowKey) => {
@@ -243,6 +225,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
       );
 
       if (originalRow && rowEdits) {
+        // eslint-disable-next-line
         const record: { material: string; [key: string]: any } = {
           material: String(originalRow["Material"] || ""),
         };
@@ -282,11 +265,6 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
     return changedRecords.length > 0 && !validateAllRowsEdited();
   };
 
-  // Check if post is allowed (all RFC fields are filled regardless of edit status)
-  const canPost = () => {
-    return validateAllRFCFieldsFilled();
-  };
-
   // Check if there are active filters
   const hasActiveFilters = () => {
     return Object.values(columnFilters).some((filters) => filters.length > 0);
@@ -301,58 +279,40 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
   };
 
   const handlePost = async () => {
-    if (selectedBranch && selectedMonth && selectedYear) {
-      // Create updated data with edited values
-      const updatedData = originalRowData.map((row) => {
-        const rowKey = getRowKey(row);
-        const rowEdits = editedValues[rowKey];
-        const updatedRow = { ...row };
+    if (!selectedBranch || !selectedMonth || !selectedYear) return;
 
-        rfcColumns.forEach((rfcColumn) => {
-          // Get the final value (edited if exists, otherwise original)
-          const finalValue =
-            rowEdits?.[rfcColumn.key] !== undefined
-              ? rowEdits[rfcColumn.key]
-              : row[rfcColumn.key];
+    const payload = originalRowData.map((row) => {
+      const key = getRowKey(row);
+      const editedRFCs = editedValues[key] ?? {};
+      const result: Partial<RowDataType> = {
+        material: row.Material,
+        // Include any other required fields from RowDataType
+      };
 
-          // For non-Dawlance, only update if value is valid number
-          if (option !== "dawlance") {
-            const numValue = Number(finalValue);
-            if (!isNaN(numValue) && finalValue !== "") {
-              updatedRow[rfcColumn.key] = finalValue;
-            } else {
-              // Explicitly set to null for empty/invalid values
-              updatedRow[rfcColumn.key] = null;
-            }
-          } else {
-            // For Dawlance, convert empty to 0
-            updatedRow[rfcColumn.key] = finalValue === "" ? "0" : finalValue;
-          }
+      if (option === "dawlance") {
+        // Generate RFC fields dynamically for dawlance
+        [...rfcColumns].reverse().forEach((rfc, index) => {
+          const colKey = rfc.key.trim();
+          const value = editedRFCs[colKey] ?? row[colKey];
+          result[`rfc-${index}` as keyof RowDataType] = value ?? 0;
         });
+      } else {
+        // For non-dawlance, send only the last RFC value
+        const lastRfcColumn = rfcColumns[rfcColumns.length - 1]?.key.trim();
+        if (lastRfcColumn) {
+          const value = editedRFCs[lastRfcColumn] ?? row[lastRfcColumn];
+          result.rfc = value ?? 0;
+        }
+      }
 
-        return updatedRow;
-      });
+      return result as RowDataType;
+    });
 
-      // Filter out rows with no valid RFC values for non-Dawlance
-      const filteredData =
-        option !== "dawlance"
-          ? updatedData.filter((row) =>
-              rfcColumns.some(
-                (col) => row[col.key] !== null && row[col.key] !== ""
-              )
-            )
-          : updatedData;
-
-      await onPost(selectedBranch, selectedMonth, selectedYear, filteredData);
-    }
+    await onPost(selectedBranch, selectedMonth, selectedYear, payload);
   };
 
   const handleSave = async () => {
     if (selectedBranch && selectedMonth && selectedYear) {
-      // if (!canSave()) {
-      //   alert("No valid changes to save. Please edit some RFC values first.");
-      //   return;
-      // }
       const changedRecords = getChangedRecords();
       await onSave(selectedBranch, selectedMonth, selectedYear, changedRecords);
     }
@@ -440,6 +400,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
               disabled={
                 isSaving ||
                 isPosting ||
+                !isFormValid ||
                 !canUserPost ||
                 permission?.post_allowed == 0
               }
@@ -468,6 +429,7 @@ export const RFCTableHeaders: React.FC<HeadersProps> = ({
           month={selectedMonth}
           year={selectedYear}
           summaryData={summaryData}
+          autoSaveCheck={handleAutoSaveSignal}
         />
       </div>
     </div>

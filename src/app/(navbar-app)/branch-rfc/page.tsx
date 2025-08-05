@@ -295,21 +295,6 @@ export default function BranchRFC() {
 
         // const authToken = localStorage.getItem("token");
 
-        // Find the RFC column (same logic as in RFCTable component)
-        const rfcColumn = columns.find(
-          (col) => col.key.includes("RFC") && !col.key.includes("Last")
-        );
-
-        if (!rfcColumn) {
-          throw new Error("RFC column not found");
-        }
-
-        // Transform data to only include material and rfc, same format as save API
-        const postData = data.map((row) => ({
-          material: String(row["Material"] || ""),
-          rfc: String(row[rfcColumn.key] || ""),
-        }));
-
         const branchRFCPostEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/branch-rfc?${query}`;
         const branchRFCSaveEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/branch-rfc-save?${query}`;
 
@@ -321,7 +306,7 @@ export default function BranchRFC() {
               "Content-Type": "application/json",
               // Authorization: `Bearer ${authToken}`,
             },
-            body: JSON.stringify(postData),
+            body: JSON.stringify(data),
           }),
           fetch(branchRFCSaveEndpoint, {
             method: "POST",
@@ -329,7 +314,7 @@ export default function BranchRFC() {
               "Content-Type": "application/json",
               // Authorization: `Bearer ${authToken}`,
             },
-            body: JSON.stringify(postData),
+            body: JSON.stringify(data),
           }),
         ]);
 

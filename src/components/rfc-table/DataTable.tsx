@@ -17,7 +17,6 @@ import { Loader2 } from "lucide-react";
 import { RFCTableHeaders } from "./DataTableHeaders";
 import { ColumnFilter } from "./ColumnFilter";
 import AnnualRFCModal from "./AnnualRFCModal";
-import { Button } from "../ui/button";
 
 interface DataTableProps {
   permission: PermissionConfig | null;
@@ -230,7 +229,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
     debounce(() => {
       const changedData = prepareChangedData();
       if (changedData.length > 0 && onAutoSave) {
-        console.log("the changed data", changedData);
         onAutoSave(changedData);
       }
     }, 3000),
@@ -356,14 +354,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
         const isFilled =
           value !== "" && value !== null && !isNaN(Number(value));
 
-        if (!isFilled) {
-          console.log("Missing value:", {
-            material: row["Material"],
-            column: col.key,
-            value,
-          });
-        }
-
         return isFilled;
       });
     });
@@ -379,12 +369,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
-      {/* <Button disabled={areAllRFCFieldsFilled()}>Submit All RFCs</Button> */}
-
-      <Button disabled={!areAllEditableRFCInputsFilled()}>
-        Submit All RFCs
-      </Button>
-
       <RFCTableHeaders
         option={option}
         permission={permission}

@@ -94,12 +94,11 @@ export default function Branchmaster() {
       }
 
       endpoint = `${endpoint}?${queryParams.toString()}`;
-      const authToken = localStorage.getItem("token");
       const res = await fetch(endpoint, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
@@ -138,15 +137,13 @@ export default function Branchmaster() {
         branch_code: branchcodes,
       };
 
-      const authToken = localStorage.getItem("token");
-
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/branches/delete`,
         {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(deletePayload),
         }

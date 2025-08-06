@@ -28,6 +28,10 @@ async function postFileAction(formData: FormData) {
       `${process.env.NEXT_PUBLIC_BASE_URL}/upload/post/${option}`,
       {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
         body: newFormData,
       }
     );
@@ -137,6 +141,10 @@ function UploadCenter() {
         `${process.env.NEXT_PUBLIC_BASE_URL}/upload/${option}/${selectedMonth}/${selectedYear}`,
         {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
           body: newFormData,
         }
       );
@@ -402,6 +410,10 @@ function UploadCenter() {
         `${process.env.NEXT_PUBLIC_BASE_URL}/upload/${cardId}?page=${page}&limit=${limit}`,
         {
           method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
       );
 

@@ -105,13 +105,12 @@ export default function Users() {
       }
 
       endpoint = `${endpoint}?${queryParams.toString()}`;
-      const authToken = localStorage.getItem("token");
 
       const res = await fetch(endpoint, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       const data = await res.json();
@@ -150,14 +149,13 @@ export default function Users() {
         master_id: masterIds,
       };
 
-      const authToken = localStorage.getItem("token");
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/mastercoding/delete`,
         {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(deletePayload),
         }
@@ -247,13 +245,12 @@ export default function Users() {
         : `${process.env.NEXT_PUBLIC_BASE_URL}/register`;
 
       const method = isUpdate ? "PUT" : "POST";
-      const authToken = localStorage.getItem("token");
 
       const response = await fetch(endpoint, {
         method: method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(apiFormattedData),
       });

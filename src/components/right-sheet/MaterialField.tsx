@@ -74,7 +74,15 @@ export function MaterialField({
         const endpoint = `${
           process.env.NEXT_PUBLIC_BASE_URL
         }/mastercoding/distinct/material?filt=${encodeURIComponent(query)}`;
-        const response = await fetch(endpoint);
+
+        const response = await fetch(endpoint, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
         if (!response.ok) throw new Error("Failed to fetch materials");
 
         const data = await response.json();
@@ -128,7 +136,15 @@ export function MaterialField({
       }/mastercoding?page=1&limit=50&material=${encodeURIComponent(
         materialCode
       )}`;
-      const response = await fetch(endpoint);
+
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
       if (!response.ok) throw new Error("Failed to fetch material details");
 
       const result = await response.json();
@@ -140,6 +156,7 @@ export function MaterialField({
           product: item.Product || "",
         };
       }
+
       return null;
     } catch (error) {
       console.error("Error fetching material details:", error);

@@ -34,7 +34,14 @@ export default function Prices() {
       });
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/prices?${queryParams.toString()}`
+        `${process.env.NEXT_PUBLIC_BASE_URL}/prices?${queryParams.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
 
       const data = await res.json();
@@ -49,7 +56,6 @@ export default function Prices() {
       console.error("Error fetching price group data:", error);
     }
   };
-
 
   const handlePageSizeChange = (val: string) => {
     const size = Number.parseInt(val);
@@ -80,6 +86,7 @@ export default function Prices() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });
@@ -101,7 +108,6 @@ export default function Prices() {
         pagination={pagination}
         currentPage={currentPage}
         onUpdate={handleUpdate}
-        // onUpdate({ material, value });
       />
     </div>
   );

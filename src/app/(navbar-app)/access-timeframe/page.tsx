@@ -38,7 +38,6 @@ export default function AccessTimeFrame() {
   }, []);
 
   const FetchTimeFrames = async () => {
-    const authToken = localStorage.getItem("token");
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/bm-timeframes`,
@@ -46,7 +45,7 @@ export default function AccessTimeFrame() {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
@@ -242,7 +241,7 @@ export default function AccessTimeFrame() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            // Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(payload),
         }

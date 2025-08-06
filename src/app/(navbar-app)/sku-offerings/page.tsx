@@ -89,7 +89,7 @@ export default function SKUOfferings() {
 
     const fetchMaterials = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const authToken = localStorage.getItem("token");
 
         const productPromise = fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/mastercoding/distinct/product`,
@@ -97,7 +97,7 @@ export default function SKUOfferings() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${authToken}`,
             },
           }
         );
@@ -116,7 +116,7 @@ export default function SKUOfferings() {
                   method: "GET",
                   headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${authToken}`,
                   },
                 }
               )
@@ -241,7 +241,6 @@ export default function SKUOfferings() {
     });
 
     try {
-      const authToken = localStorage.getItem("token");
       const formData = new FormData();
       formData.append("file", file);
       formData.append("year", selectedYear);
@@ -252,7 +251,7 @@ export default function SKUOfferings() {
         `${process.env.NEXT_PUBLIC_BASE_URL}/offerings`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${authToken}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           body: formData,
         }
       );

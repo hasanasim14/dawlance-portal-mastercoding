@@ -117,12 +117,11 @@ export function RightSheet({
 
         setLoadingSelects((prev) => ({ ...prev, [field.key]: true }));
         try {
-          const authToken = localStorage.getItem("token");
           const response = await fetch(field.apiEndpoint, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              ...(authToken && { Authorization: `Bearer ${authToken}` }),
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
           });
 
@@ -245,12 +244,11 @@ export function RightSheet({
         ) {
           setLoadingSelects((prev) => ({ ...prev, branch: true }));
           try {
-            const authToken = localStorage.getItem("token");
             const response = await fetch(branchField.apiEndpoint, {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
-                ...(authToken && { Authorization: `Bearer ${authToken}` }),
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
               },
             });
 
@@ -300,12 +298,11 @@ export function RightSheet({
         ) {
           setLoadingSelects((prev) => ({ ...prev, products: true }));
           try {
-            const authToken = localStorage.getItem("token");
             const response = await fetch(productField.apiEndpoint, {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
-                ...(authToken && { Authorization: `Bearer ${authToken}` }),
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
               },
             });
 
@@ -469,12 +466,11 @@ export function RightSheet({
       if (onSave) {
         await onSave(apiFormattedData);
       } else {
-        const authToken = localStorage.getItem("token");
         const response = await fetch(apiEndpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(apiFormattedData),
         });

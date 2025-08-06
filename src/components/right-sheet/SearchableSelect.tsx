@@ -130,8 +130,6 @@ export function SearchableSelectField({
       setError("");
 
       try {
-        const authToken = localStorage.getItem("token");
-
         // Build the API endpoint with search query
         const url = new URL(
           field.apiEndpoint,
@@ -144,7 +142,7 @@ export function SearchableSelectField({
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            ...(authToken && { Authorization: `Bearer ${authToken}` }),
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
 

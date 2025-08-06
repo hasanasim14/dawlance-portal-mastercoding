@@ -160,6 +160,8 @@ export default function BranchRFC() {
           year,
         });
 
+        const authToken = localStorage.getItem("token");
+
         // get all data
         const fetchEndpoint = `${
           process.env.NEXT_PUBLIC_BASE_URL
@@ -187,7 +189,7 @@ export default function BranchRFC() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              // Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${authToken}`,
             },
           }),
 
@@ -195,7 +197,7 @@ export default function BranchRFC() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              // Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${authToken}`,
             },
           }),
 
@@ -203,7 +205,7 @@ export default function BranchRFC() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              // Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${authToken}`,
             },
           }),
         ]);
@@ -293,7 +295,7 @@ export default function BranchRFC() {
           year,
         }).toString();
 
-        // const authToken = localStorage.getItem("token");
+        const authToken = localStorage.getItem("token");
 
         const branchRFCPostEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/branch-rfc?${query}`;
         const branchRFCSaveEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/branch-rfc-save?${query}`;
@@ -304,7 +306,7 @@ export default function BranchRFC() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              // Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${authToken}`,
             },
             body: JSON.stringify(data),
           }),
@@ -312,7 +314,7 @@ export default function BranchRFC() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              // Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${authToken}`,
             },
             body: JSON.stringify(data),
           }),
@@ -329,9 +331,6 @@ export default function BranchRFC() {
             `Second API error! status: ${secondApiResponse.status}`
           );
         }
-
-        // const branchRfcResult = await branchRfcResponse.json();
-        // const secondApiResult = await secondApiResponse.json();
 
         await fetchBranchRFCData(branch, month, year);
       } catch (error) {
@@ -350,19 +349,17 @@ export default function BranchRFC() {
       year: string,
       // eslint-disable-next-line
       changedData: Array<{ material: string; [key: string]: any }>
-      // changedData: Array<{ material: string; rfc: string }>
     ) => {
       setSaving(true);
       try {
         const query = new URLSearchParams({ branch, month, year }).toString();
-        const authToken = localStorage.getItem("token");
         const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/branch-rfc-save?${query}`;
 
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(changedData),
         });
@@ -394,14 +391,13 @@ export default function BranchRFC() {
           year: currentYear,
         }).toString();
 
-        // const authToken = localStorage.getItem("token");
         const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/branch-rfc-save?${query}`;
 
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(changedData),
         });

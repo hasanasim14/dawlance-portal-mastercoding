@@ -137,6 +137,8 @@ export default function DawlanceRFC() {
           year,
         });
 
+        const authToken = localStorage.getItem("token");
+
         // Fetch data api
         const fetchEndpoint = `${
           process.env.NEXT_PUBLIC_BASE_URL
@@ -163,6 +165,7 @@ export default function DawlanceRFC() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
             },
           }),
 
@@ -170,6 +173,7 @@ export default function DawlanceRFC() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
             },
           }),
 
@@ -177,6 +181,7 @@ export default function DawlanceRFC() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
             },
           }),
         ]);
@@ -261,6 +266,7 @@ export default function DawlanceRFC() {
       year: string,
       data: RowDataType[]
     ) => {
+      const authToken = localStorage.getItem("token");
       setPosting(true);
 
       try {
@@ -279,6 +285,7 @@ export default function DawlanceRFC() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
             },
             body: JSON.stringify(data),
           }),
@@ -286,6 +293,7 @@ export default function DawlanceRFC() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
             },
             body: JSON.stringify(data),
           }),
@@ -329,14 +337,13 @@ export default function DawlanceRFC() {
           year,
         }).toString();
 
-        const authToken = localStorage.getItem("token");
         const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/dawlance-rfc-save?${queryParams}`;
 
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(changedData),
         });

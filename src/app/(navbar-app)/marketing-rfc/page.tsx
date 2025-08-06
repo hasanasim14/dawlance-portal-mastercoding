@@ -222,6 +222,7 @@ export default function MarketingRFC() {
     ) => {
       setPosting(true);
       try {
+        const authToken = localStorage.getItem("token");
         const query = new URLSearchParams({ month, year }).toString();
 
         const postUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/marketing-rfc?${query}`;
@@ -230,12 +231,18 @@ export default function MarketingRFC() {
         const [postRes, saveRes] = await Promise.all([
           fetch(postUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
             body: JSON.stringify(data),
           }),
           fetch(saveUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
             body: JSON.stringify(data),
           }),
         ]);
@@ -316,7 +323,10 @@ export default function MarketingRFC() {
 
         const response = await fetch(endpoint, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
           body: JSON.stringify(changedData),
         });
 

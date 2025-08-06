@@ -128,13 +128,12 @@ export default function PhaseIO() {
       }
 
       endpoint = `${endpoint}?${queryParams.toString()}`;
-      const authToken = localStorage.getItem("token");
 
       const res = await fetch(endpoint, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       const data = await res.json();
@@ -170,7 +169,6 @@ export default function PhaseIO() {
     if (!query.trim()) return [];
 
     try {
-      const authToken = localStorage.getItem("token");
       const fieldForApi = field.replace(/\s+/g, "_");
       const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/phaseinout/distinct/${fieldForApi}?filt=${query}`;
 
@@ -178,7 +176,7 @@ export default function PhaseIO() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
@@ -251,14 +249,13 @@ export default function PhaseIO() {
         material: productsIds,
       };
 
-      const authToken = localStorage.getItem("token");
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/phaseinout/delete`,
         {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify(deletePayload),
         }
@@ -375,13 +372,11 @@ export default function PhaseIO() {
         : `${process.env.NEXT_PUBLIC_BASE_URL}/phaseinout/add`;
 
       const method = isUpdate ? "PUT" : "POST";
-      const authToken = localStorage.getItem("token");
-
       const response = await fetch(endpoint, {
         method: method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(apiFormattedData),
       });

@@ -1,9 +1,27 @@
-import React from "react";
-import Link from "next/link";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { rolePages } from "@/lib/rolePages";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 
 const UnauthorizedPage = () => {
+  const router = useRouter();
+  const [firstAccessiblePage, setFirstAccessiblePage] = useState<string | null>(
+    null
+  );
+
+  useEffect(() => {
+    const role = localStorage.getItem("user_role");
+    if (role && role in rolePages) {
+      const firstPage = rolePages[role as keyof typeof rolePages]?.[0];
+      if (firstPage) {
+        setFirstAccessiblePage(firstPage);
+      }
+    }
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
       <div className="max-w-md w-full text-center bg-white shadow-md rounded-lg p-8">
@@ -14,14 +32,18 @@ const UnauthorizedPage = () => {
         <p className="text-gray-600 mb-6">
           You do not have permission to view this page.
         </p>
-        <Link href="/">
-          <Button>
-            <ChevronLeft className="h-5 w-5" />
-            Go Back Home
-          </Button>
-          {/* <span>GO Back Home</span> */}
-          {/* <a className="text-blue-600 hover:underline">Go back to Home</a> */}
-        </Link>
+        <Button
+          onClick={() => {
+            if (firstAccessiblePage) {
+              router.push(firstAccessiblePage);
+            } else {
+              router.push("/");
+            }
+          }}
+        >
+          <ChevronLeft className="h-5 w-5 mr-2" />
+          Go Back
+        </Button>
       </div>
     </div>
   );

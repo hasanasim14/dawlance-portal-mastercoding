@@ -1,14 +1,17 @@
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { rolePages } from "./lib/rolePages";
-import { mockUser } from "./lib/mockUser";
 
-// eslint-disable-next-line
-export function middleware(request: any) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const role = mockUser.role;
 
-  const pagesForRole =
-    role in rolePages ? rolePages[role as keyof typeof rolePages] : [];
+  const role = request.cookies.get("user_role")?.value;
+
+  if (!role || !(role in rolePages)) {
+    return NextResponse.redirect(new URL("/401", request.url));
+  }
+
+  const pagesForRole = rolePages[role as keyof typeof rolePages];
 
   if (!pagesForRole.includes(pathname)) {
     return NextResponse.redirect(new URL("/401", request.url));

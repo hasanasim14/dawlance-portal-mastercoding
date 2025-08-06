@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -27,7 +27,6 @@ import {
   DollarSign,
   Tag,
 } from "lucide-react";
-import { mockUser } from "@/lib/mockUser";
 import { rolePages } from "@/lib/rolePages";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -38,9 +37,22 @@ import Image from "next/image";
 type Role = keyof typeof rolePages;
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
+  const [role, setRole] = useState<string | null>(null);
   const router = useRouter();
-  const role = mockUser.role;
   const pathname = usePathname();
+
+  useEffect(() => {
+    const getUserRoleFromCookie = () => {
+      if (typeof document === "undefined") return null;
+      const match = document.cookie.match(/(?:^|;\s*)user_role=([^;]*)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    };
+
+    const roleFromCookie = getUserRoleFromCookie();
+    setRole(roleFromCookie);
+  }, []);
+
+  if (!role) return null;
 
   const allowedPages: string[] =
     role in rolePages ? rolePages[role as Role] : [];

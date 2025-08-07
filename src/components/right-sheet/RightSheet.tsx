@@ -283,6 +283,8 @@ export function RightSheet({
     loadBranchOptions();
   }, [formData.role, effectiveFields]);
 
+  console.log("the role", formData?.role);
+
   // Load product options when role changes to "Product Manager"
   useEffect(() => {
     const loadProductOptions = async () => {
@@ -550,7 +552,7 @@ export function RightSheet({
 
     // Handle Multi-select fields for products - only show when role is "Product Manager"
     if (field.key === "products") {
-      if (formData.role !== "Product Manager") {
+      if (formData.role !== "product_manager") {
         return null;
       }
       return (

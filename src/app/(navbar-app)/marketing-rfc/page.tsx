@@ -144,10 +144,36 @@ export default function MarketingRFC() {
         const permissionEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/rfc/lock?${permissionParams}`;
         const RFCProductEndpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/marketing-rfc-product?${queryParams}`;
 
+        const authToken = localStorage.getItem("token");
+
         const [fetchRes, permissionRes, productRes] = await Promise.all([
-          fetch(fetchEndpoint),
-          fetch(permissionEndpoint),
-          fetch(RFCProductEndpoint),
+          fetch(fetchEndpoint, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+          }),
+
+          fetch(
+            permissionEndpoint,
+
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${authToken}`,
+              },
+            }
+          ),
+
+          fetch(RFCProductEndpoint, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+          }),
         ]);
 
         const productData = await productRes.json();

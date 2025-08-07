@@ -527,7 +527,7 @@ export const RFCTable: React.FC<DataTableProps> = ({
                               <Input
                                 type="number"
                                 value={cellValue}
-                                // disabled={permission?.save_allowed === 0}
+                                disabled={permission?.save_allowed === 0}
                                 onChange={(e) =>
                                   handleCellChange(
                                     row,

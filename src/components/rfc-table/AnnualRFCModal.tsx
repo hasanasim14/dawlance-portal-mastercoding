@@ -43,11 +43,13 @@ const AnnualRFCModal = ({
       const queryParams = new URLSearchParams();
       queryParams.append("month", dates?.month);
       queryParams.append("year", dates?.year);
-      queryParams.append("option", option);
       queryParams.append("material", materialData?.material_id || "");
 
-      if (option === "branch" && branch) {
+      if (option === "branches" && branch) {
+        queryParams.append("option", "branch");
         queryParams.append("branch", branch);
+      } else {
+        queryParams.append("option", option);
       }
 
       try {

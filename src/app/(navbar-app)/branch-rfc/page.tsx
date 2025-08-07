@@ -437,7 +437,7 @@ export default function BranchRFC() {
           editedValues={editedValues}
           onEditedValuesChange={handleEditedValuesChange}
           summaryData={summaryData}
-          option={"branch"}
+          option={"branches"}
           warningMessage={warningMessage}
         />
       </div>

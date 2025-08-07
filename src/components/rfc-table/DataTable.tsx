@@ -17,6 +17,7 @@ import { Loader2 } from "lucide-react";
 import { RFCTableHeaders } from "./DataTableHeaders";
 import { ColumnFilter } from "./ColumnFilter";
 import AnnualRFCModal from "./AnnualRFCModal";
+import TimeFrames from "../TimeFrames";
 
 interface DataTableProps {
   permission: PermissionConfig | null;
@@ -157,18 +158,6 @@ export const RFCTable: React.FC<DataTableProps> = ({
       return isRFC;
     });
   }, []);
-
-  // debugging
-  // const getRFCColumnsWithTrailingSpace = useCallback(() => {
-  //   return columnsRef.current.filter((col) => {
-  //     const key = col.key;
-  //     const isTrailingSpaceRFC = key.includes("RFC") && key.endsWith("RFC");
-
-  //     return isTrailingSpaceRFC;
-  //   });
-  // }, []);
-
-  // const trailingSpaceRFCCount = getRFCColumnsWithTrailingSpace().length;
 
   // Prepare changed data for API call - collects all RFC values for modified rows
   const prepareChangedData = useCallback(() => {
@@ -359,6 +348,8 @@ export const RFCTable: React.FC<DataTableProps> = ({
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
+      <TimeFrames option={option} />
+
       <RFCTableHeaders
         option={option}
         permission={permission}

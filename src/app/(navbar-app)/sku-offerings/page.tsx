@@ -26,6 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import DateFilter from "@/components/DateFilter";
 import SKUValidations from "@/components/sku-offerings/Validations";
+import TimeFrames from "@/components/TimeFrames";
 
 interface UploadedData {
   Material: string;
@@ -372,6 +373,8 @@ export default function SKUOfferings() {
             <div className="space-y-4">
               <div className="flex gap-3 flex-wrap items-center">
                 {/* Product Selection */}
+                <TimeFrames option={"offerings"} />
+
                 <Select value="" onValueChange={handleProductSelect}>
                   <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Select Products" />
